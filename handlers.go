@@ -1,11 +1,15 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
+	// "github.com/rs/xid"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -20,31 +24,92 @@ type Response struct {
 	StatusCode string `json:"statuscode"`
 	Status     string `json:"status"`
 	Message    string `json:"message"`
-	Counter    uint64 `json:"counter"`
 	Payload    string `json:"payload"`
 }
 
-func SimpleHandler(w http.ResponseWriter, r *http.Request) {
+type Claims struct {
+	jwt.StandardClaims
+}
+
+func AnalyticsHandler(w http.ResponseWriter, r *http.Request) {
 	var response Response
+	var analytics *Analytics
 
-	passFail := r.URL.Query().Get("flag")
 	addHeaders(w, r)
-	handleOptions(w, r)
 
-	counter++
-
-	if passFail == "" || passFail == "fail" {
-		response = Response{Name: os.Getenv("NAME"), StatusCode: "500", Status: "ERROR", Message: "The system detected an error (simulated)"}
+	body, _ := ioutil.ReadAll(r.Body)
+	// we first unmarshal the payload and add needed values before writing to couchbase
+	errs := json.Unmarshal(body, &analytics)
+	if errs != nil {
+		logger.Error(fmt.Sprintf("Could not unmarshal message data to schema %v", errs))
+		response = Response{Name: os.Getenv("NAME"), StatusCode: "500", Status: "ERROR", Message: fmt.Sprintf("Could not unmarshal message data to schema %v", errs)}
+		w.WriteHeader(http.StatusInternalServerError)
 	} else {
-		body, err := ioutil.ReadAll(r.Body)
+		analytics.Product = "Trackmate"
+
+		// ensure uniqueness
+		// id := xid.New().String()
+		id := analytics.TrackingId + analytics.From.PageName + strconv.FormatInt(analytics.Timestamp, 10)
+		_, err := bucketClient.Upsert(id, analytics, 0)
 		if err != nil {
-			response = handleError(w, "Could not read body data "+err.Error())
+			logger.Error(fmt.Sprintf("Could not insert schema into couchbase %v", err))
+			response = Response{Name: os.Getenv("NAME"), StatusCode: "500", Status: "ERROR", Message: fmt.Sprintf("Could not insert schema into couchbase %v", errs)}
+			w.WriteHeader(http.StatusInternalServerError)
 		} else {
-			response = Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: "Data uploaded succesfully", Counter: counter, Payload: string(body)}
+			// all good :)
+			logger.Debug(fmt.Sprintf("Analytics schema inserted into couchbase  %v \n", analytics))
+			response = Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: "Data inserted succesfully", Payload: string(body)}
+			w.WriteHeader(http.StatusOK)
 		}
 	}
 	b, _ := json.MarshalIndent(response, "", "	")
-	logger.Debug(fmt.Sprintf("SimpleHandler response : %s", string(b)))
+	logger.Debug(fmt.Sprintf("AnatylicsHandler response : %s", string(b)))
+	fmt.Fprintf(w, string(b))
+}
+
+func AuthHandler(w http.ResponseWriter, r *http.Request) {
+	var response Response
+
+	token := r.Header.Get(strings.ToLower("Authorization"))
+	// Remove Bearer
+	tknStr := strings.Trim(token[7:], " ")
+	logger.Debug(fmt.Sprintf("Token : %s", tknStr))
+	addHeaders(w, r)
+
+	// Initialize a new instance of `Claims`
+	claims := &Claims{}
+
+	decodedSecret, _ := base64.StdEncoding.DecodeString(os.Getenv("JWT_SECRETKEY"))
+
+	var jwtKey = []byte(decodedSecret)
+
+	// Parse the JWT string and store the result in `claims`.
+	// Note that we are passing the key in this method as well. This method will return an error
+	// if the token is invalid (if it has expired according to the expiry time we set on sign in),
+	// or if the signature does not match
+	tkn, err := jwt.ParseWithClaims(tknStr, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+
+	if err != nil {
+		if err.Error() == jwt.ErrSignatureInvalid.Error() {
+			w.WriteHeader(http.StatusUnauthorized)
+			response = Response{Name: os.Getenv("NAME"), StatusCode: "403", Status: "ERROR", Message: "Forbidden"}
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+			response = Response{Name: os.Getenv("NAME"), StatusCode: "400", Status: "ERROR", Message: "Bad Request"}
+		}
+	} else {
+		if !tkn.Valid {
+			w.WriteHeader(http.StatusUnauthorized)
+			response = Response{Name: os.Getenv("NAME"), StatusCode: "403", Status: "ERROR", Message: "Forbidden"}
+		} else {
+			response = Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: "Data uploaded succesfully", Payload: "Access granted"}
+			w.WriteHeader(http.StatusOK)
+		}
+	}
+	b, _ := json.MarshalIndent(response, "", "	")
+	logger.Debug(fmt.Sprintf("SimpleAuthHandler response : %s", string(b)))
 	fmt.Fprintf(w, string(b))
 }
 
@@ -70,20 +135,4 @@ func addHeaders(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 
-}
-
-// simple options handler
-func handleOptions(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "")
-	}
-	return
-}
-
-// simple error handler
-func handleError(w http.ResponseWriter, msg string) Response {
-	w.WriteHeader(http.StatusInternalServerError)
-	r := Response{Name: os.Getenv("NAME"), StatusCode: "500", Status: "ERROR", Message: msg}
-	return r
 }
