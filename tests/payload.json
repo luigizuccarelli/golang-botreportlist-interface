@@ -1,71 +1,82 @@
 {
-    "creative": {
-        "name": "",
-        "status": ""
+  "anonymousId": "4f3c8cf7-d35f-4877-bf5f-255a036b7440",
+  "context": {
+    "campaign": {
+      "content": "#CREATIVE.name#",
+      "name": "Dr Stockard",
+      "source": "CB"
     },
-    "currency": {
-        "code": "EUR",
-        "name": "Euro"
+    "ip": "89.100.153.114",
+    "library": {
+      "name": "analytics.js",
+      "version": "3.11.0"
     },
-    "effort": {
-        "acquisition_method": "",
-        "advantage_campaign_code": "",
-        "advantage_description": "",
-        "advertisement_name": "",
-        "campaign": "",
-        "date": "",
-        "domain": "",
-        "effort_destination": "",
-        "id": "",
-        "journey": "",
-        "promocode": "",
-        "type": "",
-        "what_are_you_promoting": "",
-        "where_is_the_marketing_going": ""
+    "locale": "en-US",
+    "page": {
+      "path": "/segmentio/index.html",
+      "referrer": "http://127.0.0.1:8089/segmentio/index.html?promoCode=XACHW100&utm_campaign=Dr%20Stockard&utm_source=CB&utm_content=%23CREATIVE.name%23&pagetype=video",
+      "search": "?promoCode=XACHW100&utm_campaign=Dr%20Stockard&utm_source=CB&utm_content=%23CREATIVE.name%23&pagetype=video",
+      "title": "How to REVERSE Alzheimer's Disease in 37 Days",
+      "url": "http://127.0.0.1:8089/segmentio/index.html?promoCode=XACHW100&utm_campaign=Dr%20Stockard&utm_source=CB&utm_content=%23CREATIVE.name%23&pagetype=video"
     },
-    "event": {
-        "timeonpage": 0,
-        "type": "load"
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36"
+  },
+  "event": "scroll_depth",
+  "integrations": {},
+  "messageId": "ajs-4c4d35ddce2c590c5611d02a0ac361fd",
+  "originalTimestamp": "2020-02-07T17:17:07.611Z",
+  "properties": {
+    "irisPlusData": {
+      "CREATIVE.name": "NMG Test Page Lead Gen",
+      "CREATIVE.status": "Active",
+      "EFFORT.advertisement_name": "#EFFORT.advertisement_name#",
+      "EFFORT.campaign": "Dr Stockard&#39;s Return Medicine Conference",
+      "EFFORT.date": "20.01.2020",
+      "EFFORT.domain": "https://qa-content-app.apps.aws2-dev.ocp.14west.io",
+      "EFFORT.effort_destination": "Internal",
+      "EFFORT.id": "d0ca6b9a-c769-46eb-b908-a34c735af09e",
+      "EFFORT.journey_name": "#EFFORT.journey_name#",
+      "EFFORT.promocode": "XACHW100",
+      "EFFORT.type": "JustALink",
+      "EFFORT.what_are_you_promoting": "ACTHOT",
+      "EFFORT.where_is_the_marketing_going": "Facebook",
+      "FORM_INFO.address": "#FORM_INFO.address#",
+      "FORM_INFO.address2": "#FORM_INFO.address2#",
+      "FORM_INFO.address3": "#FORM_INFO.address3#",
+      "FORM_INFO.city": "#FORM_INFO.city#",
+      "FORM_INFO.companyName": "#FORM_INFO.companyName#",
+      "FORM_INFO.countryCode": "#FORM_INFO.countryCode#",
+      "FORM_INFO.countryName": "#FORM_INFO.countryName#",
+      "FORM_INFO.email": "#FORM_INFO.email#",
+      "FORM_INFO.faxNumber": "#FORM_INFO.faxNumber#",
+      "FORM_INFO.firstName": "#FORM_INFO.firstName#",
+      "FORM_INFO.lastName": "#FORM_INFO.lastName#",
+      "FORM_INFO.phoneNumber": "#FORM_INFO.phoneNumber#",
+      "FORM_INFO.phoneNumber2": "#FORM_INFO.phoneNumber2#",
+      "FORM_INFO.phoneNumber3": "#FORM_INFO.phoneNumber3#",
+      "FORM_INFO.postalCode": "#FORM_INFO.postalCode#",
+      "FORM_INFO.stateCode": "#FORM_INFO.stateCode#",
+      "FORM_INFO.stateName": "#FORM_INFO.stateName#",
+      "FORM_INFO.suffix": "#FORM_INFO.suffix#",
+      "FORM_INFO.title": "#FORM_INFO.title#",
+      "JOURNEY.creative_sequence": "1",
+      "JOURNEY.name": "NMG Lead Gen Conference Signup Page",
+      "JOURNEY.status": "#JOURNEY.status#"
+
     },
-    "from": {
-        "pagename": "index",
-        "pagetype": "origin",
-        "url": "mail"
+    "type": "scroll_depth",
+    "utm_variable": {
+      "pagetype": "video",
+      "promoCode": "XACHW100",
+      "utm_campaign": "Dr Stockard",
+      "utm_content": "#CREATIVE.name#",
+      "utm_source": "CB"
     },
-    "journey": {
-        "creative_sequence": "",
-        "name": "",
-        "status": ""
-    },
-    "location": {
-        "carrier": "Virgin Mobile",
-        "country": {
-            "capital": "Dublin",
-            "code": "IE",
-            "name": "Ireland"
-        },
-        "ip": "89.100.153.114"
-    },
-    "platform": {
-        "appCodeName": "Mozilla",
-        "appName": "Netscape",
-        "appVersion": "5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36",
-        "language": "en-US",
-        "os": "Linux x86_64",
-        "product": "Gecko",
-        "productSub": "20030107",
-        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36",
-        "vendor": "Google Inc."
-    },
-    "timestamp": 1574068412150,
-    "to": {
-        "pagename": "page-one",
-        "pagetype": "landing",
-        "url": "file:///home/lzuccarelli/Projects/trackmate/nginx-reverse-proxy/www/page-one.html?custom_referrer=mail&trackingid=588a75d7-47e5-42fa-aff6-ea6f3b091ade&utm_affiliate=SBR-01&utm_campaign=WinBig&utm_medium=web&utm_source=origin&pagename=index&pagetype=origin"
-    },
-    "trackingid": "588a75d7-47e5-42fa-aff6-ea6f3b091ade",
-    "utm_affiliate": "SBR-01",
-    "utm_campaign": "WinBig",
-    "utm_medium": "web",
-    "utm_source": "origin"
+    "value": "39%"
+  },
+  "receivedAt": "2020-02-07T17:17:07.732Z",
+  "sentAt": "2020-02-07T17:17:07.614Z",
+  "timestamp": "2020-02-07T17:17:07.729Z",
+  "type": "track",
+  "userId": "97980cfea0067"
 }

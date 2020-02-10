@@ -54,7 +54,7 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/handlers/handlers.go (88.9%)</option>
+				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/handlers/handlers.go (88.5%)</option>
 				
 				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/validator/validate.go (100.0%)</option>
 				
@@ -78,7 +78,6 @@ import (
         "io/ioutil"
         "net/http"
         "os"
-        "strconv"
 
         "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/connectors"
         "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/schema"
@@ -93,7 +92,7 @@ const (
 
 func AnalyticsHandler(w http.ResponseWriter, r *http.Request, logger *simple.Logger, con connectors.Clients) <span class="cov8" title="1">{
         var response *schema.Response
-        var analytics *schema.Analytics
+        var analytics *schema.SegmentIO
 
         addHeaders(w, r)
 
@@ -105,13 +104,10 @@ func AnalyticsHandler(w http.ResponseWriter, r *http.Request, logger *simple.Log
                 response = &amp;schema.Response{Name: os.Getenv("NAME"), StatusCode: "500", Status: "ERROR", Message: fmt.Sprintf("Could not unmarshal message data to schema %v", errs)}
                 w.WriteHeader(http.StatusInternalServerError)
         }</span> else<span class="cov8" title="1"> {
-                analytics.Product = "Trackmate"
-
                 // ensure uniqueness
-                analytics.Id = analytics.TrackingId + analytics.From.PageName + strconv.FormatInt(analytics.Timestamp, 10)
-
+                analytics.Id = analytics.MessageID
                 // get a collection reference
-                upsertResult, err := con.Upsert("iris-plus", analytics, &amp;gocb.UpsertOptions{})
+                upsertResult, err := con.Upsert(analytics.Id, analytics, &amp;gocb.UpsertOptions{})
 
                 if err != nil </span><span class="cov0" title="0">{
                         logger.Error(fmt.Sprintf("Could not insert schema into couchbase %v", err))
@@ -135,20 +131,11 @@ func IsAlive(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1
 
 // headers (with cors) utility
 func addHeaders(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        //var request []string
-        //for name, headers := range r.Header {
-        //        name = strings.ToLower(name)
-        //        for _, h := range headers {
-        //                request = append(request, fmt.Sprintf("%v: %v", name, h))
-        //        }
-        //}
-
         w.Header().Set(CONTENTTYPE, APPLICATIONJSON)
         // use this for cors
         w.Header().Set("Access-Control-Allow-Origin", "*")
         w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
         w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-
 }</span>
 </pre>
 		

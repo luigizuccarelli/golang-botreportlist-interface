@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strconv"
 
 	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/connectors"
 	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/schema"
@@ -21,7 +20,7 @@ const (
 
 func AnalyticsHandler(w http.ResponseWriter, r *http.Request, logger *simple.Logger, con connectors.Clients) {
 	var response *schema.Response
-	var analytics *schema.Analytics
+	var analytics *schema.SegmentIO
 
 	addHeaders(w, r)
 
@@ -33,13 +32,10 @@ func AnalyticsHandler(w http.ResponseWriter, r *http.Request, logger *simple.Log
 		response = &schema.Response{Name: os.Getenv("NAME"), StatusCode: "500", Status: "ERROR", Message: fmt.Sprintf("Could not unmarshal message data to schema %v", errs)}
 		w.WriteHeader(http.StatusInternalServerError)
 	} else {
-		analytics.Product = "Trackmate"
-
 		// ensure uniqueness
-		analytics.Id = analytics.TrackingId + analytics.From.PageName + strconv.FormatInt(analytics.Timestamp, 10)
-
+		analytics.Id = analytics.MessageID
 		// get a collection reference
-		upsertResult, err := con.Upsert("iris-plus", analytics, &gocb.UpsertOptions{})
+		upsertResult, err := con.Upsert(analytics.Id, analytics, &gocb.UpsertOptions{})
 
 		if err != nil {
 			logger.Error(fmt.Sprintf("Could not insert schema into couchbase %v", err))
