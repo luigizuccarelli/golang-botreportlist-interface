@@ -183,7 +183,7 @@ type SegmentIO struct {
 			UtmContent  string `json:"utm_content"`
 			UtmSource   string `json:"utm_source"`
 		} `json:"utm_variable"`
-		Value string `json:"value"`
+		Value int `json:"value"`
 	} `json:"properties"`
 	ReceivedAt time.Time `json:"receivedAt"`
 	SentAt     time.Time `json:"sentAt"`
