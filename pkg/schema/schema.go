@@ -177,9 +177,11 @@ type SegmentIO struct {
 		} `json:"irisPlusData"`
 		Type        string `json:"type"`
 		UtmVariable struct {
+			Affiliate   string `json:"affiliate"`
 			Pagetype    string `json:"pagetype"`
 			PromoCode   string `json:"promoCode"`
 			UtmCampaign string `json:"utm_campaign"`
+			UtmMedium   string `json:"utm_medium"`
 			UtmContent  string `json:"utm_content"`
 			UtmSource   string `json:"utm_source"`
 		} `json:"utm_variable"`
