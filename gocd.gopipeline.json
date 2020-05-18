@@ -3,14 +3,14 @@
   "label_template": "${COUNT}",
   "enable_pipeline_locking": false,
   "name": "servisbot-middleware-interface",
-  "group" : "devops",
+  "group" : "ServisBOT",
   "tracking_tool": null,
   "timer": null,
   "environment_variables": [],
   "materials": [
     {
       "type": "git",
-      "url": "https://gitea-ci-cd.apps.balt1.okd.14west.io/lzuccarelli/servisbot-middleware-interface.git",
+      "url": "http://cicd:cicd01@gitea.cicd.svc.cluster.local:3000/servisbot-middleware-interface.git",
       "destination": null,
       "filter": null,
       "name": "scm",
