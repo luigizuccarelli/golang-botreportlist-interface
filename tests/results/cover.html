@@ -54,9 +54,9 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/handlers/handlers.go (88.5%)</option>
+				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/handlers/handlers.go (88.7%)</option>
 				
-				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/validator/validate.go (100.0%)</option>
+				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/validator/validate.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -74,15 +74,15 @@
 
 import (
         "encoding/json"
+        "errors"
         "fmt"
         "io/ioutil"
         "net/http"
         "os"
 
-        "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/connectors"
-        "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/schema"
-        gocb "github.com/couchbase/gocb/v2"
-        "github.com/microlib/simple"
+        "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/connectors"
+        "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/schema"
+        "github.com/gorilla/mux"
 )
 
 const (
@@ -90,43 +90,80 @@ const (
         APPLICATIONJSON string = "application/json"
 )
 
-func AnalyticsHandler(w http.ResponseWriter, r *http.Request, logger *simple.Logger, con connectors.Clients) <span class="cov8" title="1">{
-        var response *schema.Response
-        var analytics *schema.SegmentIO
+func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) <span class="cov8" title="1">{
+        var si *schema.SchemaInterface
+        var emails []schema.EmailProfile
+        var vars = mux.Vars(r)
 
         addHeaders(w, r)
 
-        body, _ := ioutil.ReadAll(r.Body)
-        // we first unmarshal the payload and add needed values before writing to couchbase
-        errs := json.Unmarshal(body, &amp;analytics)
-        if errs != nil </span><span class="cov8" title="1">{
-                logger.Error(fmt.Sprintf("Could not unmarshal message data to schema %v", errs))
-                response = &amp;schema.Response{Name: os.Getenv("NAME"), StatusCode: "500", Status: "ERROR", Message: fmt.Sprintf("Could not unmarshal message data to schema %v", errs)}
-                w.WriteHeader(http.StatusInternalServerError)
-        }</span> else<span class="cov8" title="1"> {
-                // ensure uniqueness
-                analytics.Id = analytics.MessageID
-                // get a collection reference
-                upsertResult, err := con.Upsert(analytics.Id, analytics, &amp;gocb.UpsertOptions{})
+        // search for the affiliate token
+        token, err := getToken(vars["affiliateid"])
+        if err != nil </span><span class="cov8" title="1">{
+                con.Error("Token  %v", err)
+                b := responseFormat(true, w, "Token  %v", err)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
 
+        <span class="cov8" title="1">url := os.Getenv("URL") + "/account/emailaddress?email=" + vars["email"]
+        body, errs := makeRequest(url, token, con)
+        if errs != nil </span><span class="cov8" title="1">{
+                con.Error(" %v", errs)
+                b := responseFormat(true, w, " %v", errs)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        <span class="cov8" title="1">errs = json.Unmarshal(body, &amp;emails)
+        if errs != nil </span><span class="cov8" title="1">{
+                msg := "Could not unmarshal email message data to schema %v"
+                con.Error(msg, errs)
+                b := responseFormat(true, w, msg, err)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        // now make the call to get all data
+        <span class="cov8" title="1">url = os.Getenv("URL") + "/username/" + emails[0].ID.UserName + "/password/" + emails[0].Password
+        body, errs = makeRequest(url, token, con)
+        if err != nil </span><span class="cov0" title="0">{
+                con.Error(" %v", err)
+                b := responseFormat(true, w, " %v", err)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        // only used in testing to intercept and inject profile data
+        <span class="cov8" title="1">if os.Getenv("TESTING") != "" &amp;&amp; os.Getenv("TESTING") == "true" </span><span class="cov8" title="1">{
+                body, err = injectJsonProfile(body)
+                // just report the error
                 if err != nil </span><span class="cov0" title="0">{
-                        logger.Error(fmt.Sprintf("Could not insert schema into couchbase %v", err))
-                        response = &amp;schema.Response{Name: os.Getenv("NAME"), StatusCode: "500", Status: "ERROR", Message: fmt.Sprintf("Could not insert schema into couchbase %v", errs)}
-                        w.WriteHeader(http.StatusInternalServerError)
-                }</span> else<span class="cov8" title="1"> {
-                        // all good :)
-                        logger.Debug(fmt.Sprintf("Analytics schema inserted into couchbase  %v \n", analytics))
-                        response = &amp;schema.Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: "Data inserted succesfully", Payload: upsertResult}
-                        w.WriteHeader(http.StatusOK)
+                        con.Error("injectJsonProfile - testing  %v", err)
                 }</span>
         }
-        <span class="cov8" title="1">b, _ := json.MarshalIndent(response, "", "        ")
-        logger.Debug(fmt.Sprintf("AnatylicsHandler response : %s", string(b)))
-        fmt.Fprintf(w, string(b))</span>
+
+        <span class="cov8" title="1">errs = json.Unmarshal(body, &amp;si)
+        if errs != nil </span><span class="cov8" title="1">{
+                msg := "Could not unmarshal profile message data to schema %v"
+                con.Error(msg, errs)
+                b := responseFormat(true, w, msg, err)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        <span class="cov8" title="1">msg := "MW data successfully retrieved"
+        con.Trace(msg, si)
+        response := &amp;schema.Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: fmt.Sprintf(msg), Payload: si}
+        w.WriteHeader(http.StatusOK)
+        b, _ := json.MarshalIndent(response, "", "        ")
+        fmt.Fprintf(w, string(b))
+        return</span>
 }
 
 func IsAlive(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         fmt.Fprintf(w, "{ \"version\" : \""+os.Getenv("VERSION")+"\" , \"name\": \""+os.Getenv("NAME")+"\" }")
+        return
 }</span>
 
 // headers (with cors) utility
@@ -137,16 +174,86 @@ func addHeaders(w http.ResponseWriter, r *http.Request) <span class="cov8" title
         w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
         w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 }</span>
+
+// responsFormat - utility function
+func responseFormat(err bool, w http.ResponseWriter, msg string, val ...interface{}) []byte <span class="cov8" title="1">{
+        var b []byte
+        // for testing
+        if err </span><span class="cov8" title="1">{
+                response := &amp;schema.Response{Name: os.Getenv("NAME"), StatusCode: "500", Status: "ERROR", Message: fmt.Sprintf(msg, val...)}
+                w.WriteHeader(http.StatusInternalServerError)
+                b, _ = json.MarshalIndent(response, "", "        ")
+                return b
+        }</span>
+        <span class="cov0" title="0">return b</span>
+}
+
+// makeRequest - private utility function
+func makeRequest(url string, token string, con connectors.Clients) ([]byte, error) <span class="cov8" title="1">{
+        var b []byte
+        req, _ := http.NewRequest("GET", url, nil)
+        req.Header.Set("token", token)
+        req.Header.Set("Content-Type", "application/json")
+        resp, err := con.Do(req)
+        if err != nil </span><span class="cov8" title="1">{
+                con.Error("Function makeRequest http request %v", err)
+                return b, err
+        }</span>
+        <span class="cov8" title="1">defer resp.Body.Close()
+        body, e := ioutil.ReadAll(resp.Body)
+        if e != nil </span><span class="cov0" title="0">{
+                con.Error("Function makeRequest %v", e)
+                return b, err
+        }</span>
+        <span class="cov8" title="1">con.Debug("Function makeRequest response from middleware %s", string(body))
+        return body, nil</span>
+}
+
+// getToken - private utility call
+func getToken(affiliate string) (string, error) <span class="cov8" title="1">{
+        var tokens []schema.TokenDetail
+        var token string = ""
+
+        if affiliate == "" </span><span class="cov0" title="0">{
+                return "", errors.New("Affiliate parameter is empty")
+        }</span>
+        <span class="cov8" title="1">errs := json.Unmarshal([]byte(os.Getenv("TOKEN")), &amp;tokens)
+        if errs != nil </span><span class="cov0" title="0">{
+                return "", errors.New("Unmarshalling token struct")
+        }</span>
+        <span class="cov8" title="1">for x, _ := range tokens </span><span class="cov8" title="1">{
+                if affiliate == tokens[x].Name </span><span class="cov8" title="1">{
+                        token = tokens[x].Token
+                        break</span>
+                }
+        }
+        <span class="cov8" title="1">if token == "" </span><span class="cov8" title="1">{
+                return "", errors.New("Token not found")
+        }</span>
+        <span class="cov8" title="1">return token, nil</span>
+}
+
+func injectJsonProfile(data []byte) ([]byte, error) <span class="cov8" title="1">{
+        // only used for testing
+        var b []byte
+        var err error
+        b, err = ioutil.ReadFile("../../tests/payload.json")
+        if err != nil </span><span class="cov0" title="0">{
+                return b, err
+        }</span>
+        <span class="cov8" title="1">return b, err</span>
+}
 </pre>
 		
 		<pre class="file" id="file1" style="display: none">package validator
 
 import (
         "fmt"
-        "github.com/microlib/simple"
         "os"
         "strconv"
         "strings"
+
+        "github.com/microlib/simple"
 )
 
 // checkEnvars - private function, iterates through each item and checks the required field
@@ -171,13 +278,9 @@ func ValidateEnvars(logger *simple.Logger) error <span class="cov8" title="1">{
         items := []string{
                 "LOG_LEVEL,false",
                 "SERVER_PORT,true",
-                "COUCHBASE_HOST,true",
-                "COUCHBASE_DATABASE,true",
-                "COUCHBASE_USER,true",
-                "COUCHBASE_PASSWORD,true",
                 "VERSION,true",
                 "NAME,true",
-                "COUCHBASE_BUCKET,true",
+                "URL,true",
         }
         for x := range items </span><span class="cov8" title="1">{
                 if err := checkEnvar(items[x], logger); err != nil </span><span class="cov8" title="1">{

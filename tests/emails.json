@@ -1,0 +1,61 @@
+[{
+	"cviNbr": "000008709364",
+	"customerNumber": "000069554161",
+	"role": "",
+	"temp": false,
+	"password": "D92747",
+	"id": {
+		"userName": "TERRY48100@YAHOO.COM.AU",
+		"portalCode": {
+			"authGroup": "ILV"
+		},
+		"authType": "E"
+	},
+	"denyAccess": "N",
+	"authStatus": "A"
+}, {
+	"cviNbr": "000017639834",
+	"customerNumber": "000069554161",
+	"role": "",
+	"temp": false,
+	"password": "D92747",
+	"id": {
+		"userName": "TERRY48100@YAHOO.COM.AU",
+		"portalCode": {
+			"authGroup": "ILV"
+		},
+		"authType": "L"
+	},
+	"denyAccess": "N",
+	"authStatus": "A"
+}, {
+	"cviNbr": "000019459762",
+	"customerNumber": "000069554161",
+	"role": "",
+	"temp": false,
+	"password": "3215",
+	"id": {
+		"userName": "TERRY@SIRSSALES.COM",
+		"portalCode": {
+			"authGroup": "ILV"
+		},
+		"authType": "E"
+	},
+	"denyAccess": "N",
+	"authStatus": "A"
+}, {
+	"cviNbr": "000019460086",
+	"customerNumber": "000069554161",
+	"role": "",
+	"temp": false,
+	"password": "3215",
+	"id": {
+		"userName": "TERRY@SIRSSALES.COM",
+		"portalCode": {
+			"authGroup": "ILV"
+		},
+		"authType": "L"
+	},
+	"denyAccess": "N",
+	"authStatus": "A"
+}]

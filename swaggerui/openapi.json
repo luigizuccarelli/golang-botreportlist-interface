@@ -1,0 +1,258 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "description": "OpenAPI standard for ServisBOT Interface",
+    "title": "servisbot-middleware-interface",
+    "version": "1.0.1",
+    "contact": {
+      "name": "API Support",
+      "url": "http://www.threefoldsystems.com/support",
+      "email": "lzuccarelli@tfd.ie"
+    }
+  },
+  "paths": {
+    "/mw/api/v2/api-docs/": {
+      "get": {
+        "summary": "OpenAPI 3.0 online documentation",
+        "responses": {
+          "200": {
+            "description": "Online API Documentation",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mw/api/v2/sys/info/isalive": {
+      "get": {
+        "summary": "Openshift readiness and liveliness probes",
+        "responses": {
+          "200": {
+            "description": "Readiness and liveliness probe check",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mw/api/v1/{affiliateid}/profile/{email}": {
+      "get": {
+        "summary": "Api call that gets the profile data for a customer by email",
+        "operationId": "mwgetprofile",
+        "parameters": [
+          {
+            "name": "affiliateid",
+            "in": "path",
+            "description": "affiliate id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "auth",
+            "in": "header",
+            "description": "authorization header using 'Authorization: Bearer token'",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get profile data by email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "items": {
+                    "$ref": "#/components/schemas/Response"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "items": {
+                    "$ref": "#/components/schemas/Response"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+  },
+  "servers": [
+    {
+      "url": "https://nginx-service-servisbot.apps.aws2-dev.ocp.14west.io",
+      "variables": {
+        "port": {
+          "default": "443"
+        },
+        "basePath": {
+          "default": "/"
+        }
+      },
+      "description": "base path and url for microservices"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "SchemaInterface": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "object",
+            "format": "int64"
+          },
+          "lastupdate": {
+            "type": "number",
+            "format": "int64"
+          },
+          "metainfo": {
+            "type": "string"
+          },
+          "emails": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmailProfile"
+            }
+          }
+        }
+      },
+      "EmailProfile": 
+      {
+        "required": [
+          "cviNbr",
+          "customerNumber",
+          "role",
+          "temp",
+          "password",
+          "id",
+          "denyAccess",
+          "authStatus"
+        ],
+        "properties": {
+          "cviNbr": {
+            "type": "string"
+          },
+          "customerNumber": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "temp": {
+            "type": "boolean"
+          },
+          "password": {
+            "type": "string"
+          },
+          "id": {
+            "required": [
+                "userName",
+                "portalCode",
+                "authType"
+            ],
+            "properties": {
+              "userName": {
+                "type": "string"
+              },
+              "portalCode": {
+                "required": [
+                  "authGroup"
+                ],
+                "properties": {
+                  "authGroup": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "authType": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "denyAccess": {
+            "type": "string"
+          },
+          "authStatus": {
+            "type": "string"
+          }
+        }
+      },
+      "Response": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "number",
+            "format": "int64"
+          },
+          "statuscode": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/SchemaInterface"
+          }
+        }
+      }
+    },
+    "responses": {
+      "NotFound": {
+        "description": "Entity not found."
+      },
+      "IllegalInput": {
+        "description": "Illegal input for operation."
+      },
+      "Forbidden": {
+        "description": "Not allowed to access this endpoint"
+      },
+      "GeneralError": {
+        "description": "General Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

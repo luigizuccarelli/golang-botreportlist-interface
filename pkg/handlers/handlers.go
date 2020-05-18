@@ -2,15 +2,15 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/connectors"
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/schema"
-	gocb "github.com/couchbase/gocb/v2"
-	"github.com/microlib/simple"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/connectors"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/schema"
+	"github.com/gorilla/mux"
 )
 
 const (
@@ -18,43 +18,80 @@ const (
 	APPLICATIONJSON string = "application/json"
 )
 
-func AnalyticsHandler(w http.ResponseWriter, r *http.Request, logger *simple.Logger, con connectors.Clients) {
-	var response *schema.Response
-	var analytics *schema.SegmentIO
+func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
+	var si *schema.SchemaInterface
+	var emails []schema.EmailProfile
+	var vars = mux.Vars(r)
 
 	addHeaders(w, r)
 
-	body, _ := ioutil.ReadAll(r.Body)
-	// we first unmarshal the payload and add needed values before writing to couchbase
-	errs := json.Unmarshal(body, &analytics)
-	if errs != nil {
-		logger.Error(fmt.Sprintf("Could not unmarshal message data to schema %v", errs))
-		response = &schema.Response{Name: os.Getenv("NAME"), StatusCode: "500", Status: "ERROR", Message: fmt.Sprintf("Could not unmarshal message data to schema %v", errs)}
-		w.WriteHeader(http.StatusInternalServerError)
-	} else {
-		// ensure uniqueness
-		analytics.Id = analytics.MessageID
-		// get a collection reference
-		upsertResult, err := con.Upsert(analytics.Id, analytics, &gocb.UpsertOptions{})
+	// search for the affiliate token
+	token, err := getToken(vars["affiliateid"])
+	if err != nil {
+		con.Error("Token  %v", err)
+		b := responseFormat(true, w, "Token  %v", err)
+		fmt.Fprintf(w, string(b))
+		return
+	}
 
+	url := os.Getenv("URL") + "/account/emailaddress?email=" + vars["email"]
+	body, errs := makeRequest(url, token, con)
+	if errs != nil {
+		con.Error(" %v", errs)
+		b := responseFormat(true, w, " %v", errs)
+		fmt.Fprintf(w, string(b))
+		return
+	}
+
+	errs = json.Unmarshal(body, &emails)
+	if errs != nil {
+		msg := "Could not unmarshal email message data to schema %v"
+		con.Error(msg, errs)
+		b := responseFormat(true, w, msg, err)
+		fmt.Fprintf(w, string(b))
+		return
+	}
+
+	// now make the call to get all data
+	url = os.Getenv("URL") + "/username/" + emails[0].ID.UserName + "/password/" + emails[0].Password
+	body, errs = makeRequest(url, token, con)
+	if err != nil {
+		con.Error(" %v", err)
+		b := responseFormat(true, w, " %v", err)
+		fmt.Fprintf(w, string(b))
+		return
+	}
+
+	// only used in testing to intercept and inject profile data
+	if os.Getenv("TESTING") != "" && os.Getenv("TESTING") == "true" {
+		body, err = injectJsonProfile(body)
+		// just report the error
 		if err != nil {
-			logger.Error(fmt.Sprintf("Could not insert schema into couchbase %v", err))
-			response = &schema.Response{Name: os.Getenv("NAME"), StatusCode: "500", Status: "ERROR", Message: fmt.Sprintf("Could not insert schema into couchbase %v", errs)}
-			w.WriteHeader(http.StatusInternalServerError)
-		} else {
-			// all good :)
-			logger.Debug(fmt.Sprintf("Analytics schema inserted into couchbase  %v \n", analytics))
-			response = &schema.Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: "Data inserted succesfully", Payload: upsertResult}
-			w.WriteHeader(http.StatusOK)
+			con.Error("injectJsonProfile - testing  %v", err)
 		}
 	}
+
+	errs = json.Unmarshal(body, &si)
+	if errs != nil {
+		msg := "Could not unmarshal profile message data to schema %v"
+		con.Error(msg, errs)
+		b := responseFormat(true, w, msg, err)
+		fmt.Fprintf(w, string(b))
+		return
+	}
+
+	msg := "MW data successfully retrieved"
+	con.Trace(msg, si)
+	response := &schema.Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: fmt.Sprintf(msg), Payload: si}
+	w.WriteHeader(http.StatusOK)
 	b, _ := json.MarshalIndent(response, "", "	")
-	logger.Debug(fmt.Sprintf("AnatylicsHandler response : %s", string(b)))
 	fmt.Fprintf(w, string(b))
+	return
 }
 
 func IsAlive(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "{ \"version\" : \""+os.Getenv("VERSION")+"\" , \"name\": \""+os.Getenv("NAME")+"\" }")
+	return
 }
 
 // headers (with cors) utility
@@ -64,4 +101,73 @@ func addHeaders(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+}
+
+// responsFormat - utility function
+func responseFormat(err bool, w http.ResponseWriter, msg string, val ...interface{}) []byte {
+	var b []byte
+	// for testing
+	if err {
+		response := &schema.Response{Name: os.Getenv("NAME"), StatusCode: "500", Status: "ERROR", Message: fmt.Sprintf(msg, val...)}
+		w.WriteHeader(http.StatusInternalServerError)
+		b, _ = json.MarshalIndent(response, "", "	")
+		return b
+	}
+	return b
+}
+
+// makeRequest - private utility function
+func makeRequest(url string, token string, con connectors.Clients) ([]byte, error) {
+	var b []byte
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("token", token)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := con.Do(req)
+	if err != nil {
+		con.Error("Function makeRequest http request %v", err)
+		return b, err
+	}
+	defer resp.Body.Close()
+	body, e := ioutil.ReadAll(resp.Body)
+	if e != nil {
+		con.Error("Function makeRequest %v", e)
+		return b, err
+	}
+	con.Debug("Function makeRequest response from middleware %s", string(body))
+	return body, nil
+}
+
+// getToken - private utility call
+func getToken(affiliate string) (string, error) {
+	var tokens []schema.TokenDetail
+	var token string = ""
+
+	if affiliate == "" {
+		return "", errors.New("Affiliate parameter is empty")
+	}
+	errs := json.Unmarshal([]byte(os.Getenv("TOKEN")), &tokens)
+	if errs != nil {
+		return "", errors.New("Unmarshalling token struct")
+	}
+	for x, _ := range tokens {
+		if affiliate == tokens[x].Name {
+			token = tokens[x].Token
+			break
+		}
+	}
+	if token == "" {
+		return "", errors.New("Token not found")
+	}
+	return token, nil
+}
+
+func injectJsonProfile(data []byte) ([]byte, error) {
+	// only used for testing
+	var b []byte
+	var err error
+	b, err = ioutil.ReadFile("../../tests/payload.json")
+	if err != nil {
+		return b, err
+	}
+	return b, err
 }

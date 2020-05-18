@@ -6,9 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/connectors"
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/handlers"
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/validator"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/connectors"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/handlers"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/validator"
 	"github.com/gorilla/mux"
 	"github.com/microlib/simple"
 )
@@ -17,21 +17,25 @@ var (
 	logger *simple.Logger
 )
 
-func startHttpServer(logger *simple.Logger, con connectors.Clients) *http.Server {
+func startHttpServer(con connectors.Clients) *http.Server {
 	srv := &http.Server{Addr: ":" + os.Getenv("SERVER_PORT")}
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/api/v1/analytics", func(w http.ResponseWriter, req *http.Request) {
-		handlers.AnalyticsHandler(w, req, logger, con)
-	}).Methods("POST")
+	r.HandleFunc("/api/v1/{affiliateid}/profile/{email}", func(w http.ResponseWriter, req *http.Request) {
+		handlers.ProfileHandler(w, req, con)
+	}).Methods("GET", "OPTIONS")
 
 	r.HandleFunc("/api/v2/sys/info/isalive", handlers.IsAlive).Methods("GET")
+
+	sh := http.StripPrefix("/api/v2/api-docs/", http.FileServer(http.Dir("./swaggerui/")))
+	r.PathPrefix("/api/v2/api-docs/").Handler(sh)
+
 	http.Handle("/", r)
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
-			logger.Error("Httpserver: ListenAndServe() error: " + err.Error())
+			con.Error("Httpserver: ListenAndServe() error: " + err.Error())
 		}
 	}()
 
@@ -53,9 +57,7 @@ func main() {
 
 	conn := connectors.NewClientConnections(logger)
 
-	defer conn.Close()
-
-	srv := startHttpServer(logger, conn)
+	srv := startHttpServer(conn)
 	logger.Info("Starting server on port " + srv.Addr)
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)

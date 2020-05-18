@@ -1,46 +1,48 @@
 package connectors
 
 import (
-	"os"
+	"crypto/tls"
+	"fmt"
+	"net/http"
 
-	gocb "github.com/couchbase/gocb/v2"
 	"github.com/microlib/simple"
 )
 
 // Connections struct - all backend connections in a common object
-type Connections struct {
-	Bucket  *gocb.Bucket
-	Cluster *gocb.Cluster
+type Connectors struct {
+	Http   *http.Client
+	Logger *simple.Logger
 }
 
-// Upsert call implementation
-func (r *Connections) Upsert(col string, value interface{}, opts *gocb.UpsertOptions) (*gocb.MutationResult, error) {
-	//collection := bucket.Scope("default").Collection(col, &gocb.CollectionOptions{})
-	collection := r.Bucket.DefaultCollection()
-	return collection.Upsert(col, value, opts)
-}
-
-func (r *Connections) Close() error {
-	return r.Cluster.Close(&gocb.ClusterCloseOptions{})
-}
-
-// NewClientConnectors returns Connectors struct
 func NewClientConnections(logger *simple.Logger) Clients {
-
-	opts := gocb.ClusterOptions{
-		Authenticator: gocb.PasswordAuthenticator{
-			Username: os.Getenv("COUCHBASE_USER"),
-			Password: os.Getenv("COUCHBASE_PASSWORD"),
-		},
+	// set up http object
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-	cluster, err := gocb.Connect(os.Getenv("COUCHBASE_HOST"), opts)
-	if err != nil {
-		panic(err)
-	}
+	httpClient := &http.Client{Transport: tr}
+	return &Connectors{Http: httpClient, Logger: logger}
+}
 
-	// get a bucket reference
-	bucket := cluster.Bucket(os.Getenv("COUCHBASE_BUCKET"), &gocb.BucketOptions{})
+func (c *Connectors) Error(msg string, val ...interface{}) {
+	c.Logger.Error(fmt.Sprintf(msg, val...))
+}
 
-	conns := &Connections{Bucket: bucket, Cluster: cluster}
-	return conns
+func (c *Connectors) Info(msg string, val ...interface{}) {
+	c.Logger.Info(fmt.Sprintf(msg, val...))
+}
+
+func (c *Connectors) Debug(msg string, val ...interface{}) {
+	c.Logger.Debug(fmt.Sprintf(msg, val...))
+}
+
+func (c *Connectors) Trace(msg string, val ...interface{}) {
+	c.Logger.Trace(fmt.Sprintf(msg, val...))
+}
+
+func (c *Connectors) Meta(info string) string {
+	return info
+}
+
+func (c *Connectors) Do(req *http.Request) (*http.Response, error) {
+	return c.Http.Do(req)
 }

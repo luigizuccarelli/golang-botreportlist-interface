@@ -1,196 +1,107 @@
 package schema
 
-import (
-	"time"
-)
-
 // Response schema
 type Response struct {
-	Name       string      `json:"name"`
-	StatusCode string      `json:"statuscode"`
-	Status     string      `json:"status"`
-	Message    string      `json:"message"`
-	Payload    interface{} `json:"payload"`
+	Name       string           `json:"name"`
+	StatusCode string           `json:"statuscode"`
+	Status     string           `json:"status"`
+	Message    string           `json:"message"`
+	Payload    *SchemaInterface `json:"payload"`
 }
 
-// Analytics schema that forwards the json data payload to our backend analytics system (Couchbase)
-type Analytics struct {
-	Id         string         `json:"id"`
-	TrackingId string         `json:"trackingid"`
-	To         PageDetail     `json:"to"`
-	From       PageDetail     `json:"from"`
-	Location   LocationDetail `json:"location"`
-	Currency   CurrencyDetail `json:"currency"`
-	Event      EventDetail    `json:"event"`
-	Campaign   string         `json:"utm_campaign"`
-	Affiliate  string         `json:"utm_affiliate"`
-	Medium     string         `json:"utm_medium"`
-	Source     string         `json:"utm_source"`
-	Conent     string         `json:"utm_content"`
-	Timestamp  int64          `json:"timestamp"`
-	Platform   PlatformDetail `json:"platform"`
-	Creative   CreativeDetail `json:"creative"`
-	Effort     EffortDetail   `json:"effort"`
-	Journey    JourneyDetail  `json:"journey"`
-	Product    string         `json:"product"`
+// Token Schema
+type TokenDetail struct {
+	Id    int    `json:"id"`
+	Name  string `json:"name"`
+	Token string `json:"token"`
 }
 
-type PageDetail struct {
-	Url      string `json:"url"`
-	PageName string `json:"pagename"`
-	PageType string `json:"pagetype"`
+type EmailProfile struct {
+	CviNbr         string `json:"cviNbr"`
+	CustomerNumber string `json:"customerNumber"`
+	Role           string `json:"role"`
+	Temp           bool   `json:"temp"`
+	Password       string `json:"password"`
+	ID             struct {
+		UserName   string `json:"userName"`
+		PortalCode struct {
+			AuthGroup string `json:"authGroup"`
+		} `json:"portalCode"`
+		AuthType string `json:"authType"`
+	} `json:"id"`
+	DenyAccess string `json:"denyAccess"`
+	AuthStatus string `json:"authStatus"`
 }
 
-// LocationDetail schema - used in the Analytics schema
-type LocationDetail struct {
-	Ip      string        `json:"ip"`
-	Carrier string        `json:"carrier"`
-	Country CountryDetail `json:"country"`
+type Email struct {
+	EmailAddress string `json: "emailAddress"`
+	Temp         bool   `json: "temp"`
 }
 
-// CountryDetail schema
-type CountryDetail struct {
-	Name     string `json:"name"`
-	Code     string `json:"code"`
-	Capitial string `json:"capital"`
+type PostalAddress struct {
+	BirthDate    string `json: "birthDate"`
+	City         string `json: "city"`
+	CountryCode  string `json: "countryCode"`
+	EmailAddress Email
+	FirstName    string `json: "firstName"`
+	LastName     string `json: "lastName"`
+	PhoneNumber  string `json: "phoneNumber"`
+	PostalCode   string `json: "postalCode"`
+	State        string `json: "state"`
+	Street       string `json: "street"`
+	Street2      string `json: "street2"`
+	Street3      string `json: "street3"`
+	Title        string `json: "title"`
 }
 
-// CurrencyDetail schema - used in the Analytics schema
-type CurrencyDetail struct {
-	Name string `json:"name"`
-	Code string `json:"code"`
+type SubscriptionsOrders struct {
+	AccessMaintenanceOrders []interface{} `json: "accessMaintenanceOrders,omitempty"`
+	ProductOrders           []interface{} `json: "productOrders,omitempty"`
+	Subscriptions           []Subscription
 }
 
-// EventDetail schema
-type EventDetail struct {
-	Type       string `json:"type"`
-	TimeonPage int    `json:"timeonpage"`
+// Subscription - the main data
+// This schema will change for each microservice
+type Subscription struct {
+	CircStatus          string `json:"circStatus"`
+	DeliveryCode        string `json:"deliveryCode"`
+	PromoCode           string `json:"promoCode"`
+	StartDate           string `json:"startDate"`
+	FinalExpirationDate string `json:"finalExpirationDate"`
+	IssuesRemaining     int64  `json:"issuesRemaining"`
+	LastIssue           string `json:"lastIssue"`
+	Id                  ID     `json:"id"`
 }
 
-// PlatformDetail
-type PlatformDetail struct {
-	AppcodeName string `json:"appCodeName"`
-	AppName     string `json:"appName"`
-	AppVersion  string `json:"appVersion"`
-	Language    string `json:"language"`
-	Os          string `json:"os"`
-	Product     string `json:"product"`
-	ProductSub  string `json:"productSub"`
-	UserAgent   string `json:"userAgent"`
-	Vendor      string `json:"vendor"`
+type ID struct {
+	CustomerNumber string   `json:"customerNumber"`
+	SubRef         string   `json:"subRef"`
+	Item           ItemData `json:"item"`
 }
 
-type CreativeDetail struct {
-	Name   string `json:"name"`
-	Status string `json:"status"`
+type ItemData struct {
+	Format              string `json:"format"`
+	ItemDemoGraphic     string `json: "itemDemographic1"`
+	ItemDescription     string `json: "itemDescription"`
+	ItemNumber          string `json: "itemNumber"`
+	ItemType            string `json: "itemType"`
+	OwningOrg           string `json: "owningOrg"`
+	PackageFlag         string `json: "packageFlag"`
+	ProductFamily       string `json: "productFamily"`
+	SaleableFlag        string `json: "saleableFlag"`
+	SalesTaxProductCode string `json: "salesTaxProductCode"`
+	ServiceCode         string `json: "serviceCode"`
+	TaxCommodityCode    string `json: "taxCommodityCode"`
 }
 
-type EffortDetail struct {
-	AcquisitionMethod        string `json:"acquisition_method"`
-	AdvantageCampaignCode    string `json:"advantage_campaign_code"`
-	AdvantageDescription     string `json:"advantage_description"`
-	AdvertisementName        string `json:"advertisement_name"`
-	Campaign                 string `json:"campaign"`
-	Domain                   string `json:"domain"`
-	Date                     string `json:"date"`
-	EffortDestination        string `json:"effor_destination"`
-	Id                       string `json:"id"`
-	Type                     string `json:"type"`
-	Journey                  string `json:"journey"`
-	Promocode                string `json:"promocode"`
-	WhatAreYouPomoting       string `json:"what_are_you_promoting"`
-	WhereIsTheMarketingGoing string `json:"where_is_the_marketing_going"`
-}
-
-type JourneyDetail struct {
-	CreativeSequence string `json:"creative_sequence"`
-	Name             string `json:"name"`
-	Status           string `json:"status"`
-}
-
-type SegmentIO struct {
-	Id          string `json:"id,omitempy"`
-	AnonymousID string `json:"anonymousId"`
-	Context     struct {
-		Campaign struct {
-			Content string `json:"content"`
-			Name    string `json:"name"`
-			Source  string `json:"source"`
-		} `json:"campaign"`
-		IP      string `json:"ip"`
-		Library struct {
-			Name    string `json:"name"`
-			Version string `json:"version"`
-		} `json:"library"`
-		Locale string `json:"locale"`
-		Page   struct {
-			Path     string `json:"path"`
-			Referrer string `json:"referrer"`
-			Search   string `json:"search"`
-			Title    string `json:"title"`
-			URL      string `json:"url"`
-		} `json:"page"`
-		UserAgent string `json:"userAgent"`
-	} `json:"context"`
-	Event        string `json:"event"`
-	Integrations struct {
-	} `json:"integrations"`
-	MessageID         string    `json:"messageId"`
-	OriginalTimestamp time.Time `json:"originalTimestamp"`
-	Properties        struct {
-		IrisPlusData struct {
-			CREATIVEName                   string `json:"CREATIVE.name"`
-			CREATIVEStatus                 string `json:"CREATIVE.status"`
-			EFFORTAdvertisementName        string `json:"EFFORT.advertisement_name"`
-			EFFORTCampaign                 string `json:"EFFORT.campaign"`
-			EFFORTDate                     string `json:"EFFORT.date"`
-			EFFORTDomain                   string `json:"EFFORT.domain"`
-			EFFORTEffortDestination        string `json:"EFFORT.effort_destination"`
-			EFFORTID                       string `json:"EFFORT.id"`
-			EFFORTJourneyName              string `json:"EFFORT.journey_name"`
-			EFFORTPromocode                string `json:"EFFORT.promocode"`
-			EFFORTType                     string `json:"EFFORT.type"`
-			EFFORTWhatAreYouPromoting      string `json:"EFFORT.what_are_you_promoting"`
-			EFFORTWhereIsTheMarketingGoing string `json:"EFFORT.where_is_the_marketing_going"`
-			FORMINFOAddress                string `json:"FORM_INFO.address"`
-			FORMINFOAddress2               string `json:"FORM_INFO.address2"`
-			FORMINFOAddress3               string `json:"FORM_INFO.address3"`
-			FORMINFOCity                   string `json:"FORM_INFO.city"`
-			FORMINFOCompanyName            string `json:"FORM_INFO.companyName"`
-			FORMINFOCountryCode            string `json:"FORM_INFO.countryCode"`
-			FORMINFOCountryName            string `json:"FORM_INFO.countryName"`
-			FORMINFOEmail                  string `json:"FORM_INFO.email"`
-			FORMINFOFaxNumber              string `json:"FORM_INFO.faxNumber"`
-			FORMINFOFirstName              string `json:"FORM_INFO.firstName"`
-			FORMINFOLastName               string `json:"FORM_INFO.lastName"`
-			FORMINFOPhoneNumber            string `json:"FORM_INFO.phoneNumber"`
-			FORMINFOPhoneNumber2           string `json:"FORM_INFO.phoneNumber2"`
-			FORMINFOPhoneNumber3           string `json:"FORM_INFO.phoneNumber3"`
-			FORMINFOPostalCode             string `json:"FORM_INFO.postalCode"`
-			FORMINFOStateCode              string `json:"FORM_INFO.stateCode"`
-			FORMINFOStateName              string `json:"FORM_INFO.stateName"`
-			FORMINFOSuffix                 string `json:"FORM_INFO.suffix"`
-			FORMINFOTitle                  string `json:"FORM_INFO.title"`
-			JOURNEYCreativeSequence        string `json:"JOURNEY.creative_sequence"`
-			JOURNEYName                    string `json:"JOURNEY.name"`
-			JOURNEYStatus                  string `json:"JOURNEY.status"`
-		} `json:"irisPlusData"`
-		Type        string `json:"type"`
-		UtmVariable struct {
-			Affiliate   string `json:"affiliate"`
-			Pagetype    string `json:"pagetype"`
-			PromoCode   string `json:"promoCode"`
-			UtmCampaign string `json:"utm_campaign"`
-			UtmMedium   string `json:"utm_medium"`
-			UtmContent  string `json:"utm_content"`
-			UtmSource   string `json:"utm_source"`
-		} `json:"utm_variable"`
-		Value int `json:"value"`
-	} `json:"properties"`
-	ReceivedAt time.Time `json:"receivedAt"`
-	SentAt     time.Time `json:"sentAt"`
-	Timestamp  time.Time `json:"timestamp"`
-	Type       string    `json:"type"`
-	UserID     string    `json:"userId"`
-	Version    int       `json:"version"`
+// ShcemaInterface - acts as an interface wrapper for our profile schema
+// All the go microservices will using this schema
+type SchemaInterface struct {
+	ID                     int64               `json:"_id,omitempty"`
+	LastUpdate             int64               `json:"lastupdate,omitempty"`
+	MetaInfo               string              `json:"metainfo,omitempty"`
+	Accounts               []EmailProfile      `json:"accounts,omitempty"`
+	SubscriptionsAndOrders SubscriptionsOrders `json:"subscriptions,omitempty"`
+	PostalAddresses        []PostalAddress     `json:"postaladdresses,omitempty"`
+	EmailAddresses         []Email             `json:"emailaddresses,omitempty"`
 }

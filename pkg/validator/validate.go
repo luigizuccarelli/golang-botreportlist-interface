@@ -2,10 +2,11 @@ package validator
 
 import (
 	"fmt"
-	"github.com/microlib/simple"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/microlib/simple"
 )
 
 // checkEnvars - private function, iterates through each item and checks the required field
@@ -30,13 +31,9 @@ func ValidateEnvars(logger *simple.Logger) error {
 	items := []string{
 		"LOG_LEVEL,false",
 		"SERVER_PORT,true",
-		"COUCHBASE_HOST,true",
-		"COUCHBASE_DATABASE,true",
-		"COUCHBASE_USER,true",
-		"COUCHBASE_PASSWORD,true",
 		"VERSION,true",
 		"NAME,true",
-		"COUCHBASE_BUCKET,true",
+		"URL,true",
 	}
 	for x := range items {
 		if err := checkEnvar(items[x], logger); err != nil {

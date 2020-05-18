@@ -1,82 +1,281 @@
 {
-  "anonymousId": "4f3c8cf7-d35f-4877-bf5f-255a036b7440",
-  "context": {
-    "campaign": {
-      "content": "#CREATIVE.name#",
-      "name": "Dr Stockard",
-      "source": "CB"
-    },
-    "ip": "89.100.153.114",
-    "library": {
-      "name": "analytics.js",
-      "version": "3.11.0"
-    },
-    "locale": "en-US",
-    "page": {
-      "path": "/segmentio/index.html",
-      "referrer": "http://127.0.0.1:8089/segmentio/index.html?promoCode=XACHW100&utm_campaign=Dr%20Stockard&utm_source=CB&utm_content=%23CREATIVE.name%23&pagetype=video",
-      "search": "?promoCode=XACHW100&utm_campaign=Dr%20Stockard&utm_source=CB&utm_content=%23CREATIVE.name%23&pagetype=video",
-      "title": "How to REVERSE Alzheimer's Disease in 37 Days",
-      "url": "http://127.0.0.1:8089/segmentio/index.html?promoCode=XACHW100&utm_campaign=Dr%20Stockard&utm_source=CB&utm_content=%23CREATIVE.name%23&pagetype=video"
-    },
-    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36"
-  },
-  "event": "scroll_depth",
-  "integrations": {},
-  "messageId": "ajs-4c4d35ddce2c590c5611d02a0ac361fd",
-  "originalTimestamp": "2020-02-07T17:17:07.611Z",
-  "properties": {
-    "irisPlusData": {
-      "CREATIVE.name": "NMG Test Page Lead Gen",
-      "CREATIVE.status": "Active",
-      "EFFORT.advertisement_name": "#EFFORT.advertisement_name#",
-      "EFFORT.campaign": "Dr Stockard&#39;s Return Medicine Conference",
-      "EFFORT.date": "20.01.2020",
-      "EFFORT.domain": "https://qa-content-app.apps.aws2-dev.ocp.14west.io",
-      "EFFORT.effort_destination": "Internal",
-      "EFFORT.id": "d0ca6b9a-c769-46eb-b908-a34c735af09e",
-      "EFFORT.journey_name": "#EFFORT.journey_name#",
-      "EFFORT.promocode": "XACHW100",
-      "EFFORT.type": "JustALink",
-      "EFFORT.what_are_you_promoting": "ACTHOT",
-      "EFFORT.where_is_the_marketing_going": "Facebook",
-      "FORM_INFO.address": "#FORM_INFO.address#",
-      "FORM_INFO.address2": "#FORM_INFO.address2#",
-      "FORM_INFO.address3": "#FORM_INFO.address3#",
-      "FORM_INFO.city": "#FORM_INFO.city#",
-      "FORM_INFO.companyName": "#FORM_INFO.companyName#",
-      "FORM_INFO.countryCode": "#FORM_INFO.countryCode#",
-      "FORM_INFO.countryName": "#FORM_INFO.countryName#",
-      "FORM_INFO.email": "#FORM_INFO.email#",
-      "FORM_INFO.faxNumber": "#FORM_INFO.faxNumber#",
-      "FORM_INFO.firstName": "#FORM_INFO.firstName#",
-      "FORM_INFO.lastName": "#FORM_INFO.lastName#",
-      "FORM_INFO.phoneNumber": "#FORM_INFO.phoneNumber#",
-      "FORM_INFO.phoneNumber2": "#FORM_INFO.phoneNumber2#",
-      "FORM_INFO.phoneNumber3": "#FORM_INFO.phoneNumber3#",
-      "FORM_INFO.postalCode": "#FORM_INFO.postalCode#",
-      "FORM_INFO.stateCode": "#FORM_INFO.stateCode#",
-      "FORM_INFO.stateName": "#FORM_INFO.stateName#",
-      "FORM_INFO.suffix": "#FORM_INFO.suffix#",
-      "FORM_INFO.title": "#FORM_INFO.title#",
-      "JOURNEY.creative_sequence": "1",
-      "JOURNEY.name": "NMG Lead Gen Conference Signup Page",
-      "JOURNEY.status": "#JOURNEY.status#"
-
-    },
-    "type": "scroll_depth",
-    "utm_variable": {
-      "pagetype": "video",
-      "promoCode": "XACHW100",
-      "utm_campaign": "Dr Stockard",
-      "utm_content": "#CREATIVE.name#",
-      "utm_source": "CB"
-    },
-    "value": 39
-  },
-  "receivedAt": "2020-02-07T17:17:07.732Z",
-  "sentAt": "2020-02-07T17:17:07.614Z",
-  "timestamp": "2020-02-07T17:17:07.729Z",
-  "type": "track",
-  "userId": "97980cfea0067"
+  "accounts": [
+        {
+            "authStatus": "A",
+            "customerNumber": "000002096234",
+            "cviNbr": "000015977312",
+            "denyAccess": "N",
+            "id": {
+                "authType": "E",
+                "portalCode": {
+                    "authGroup": "MYK"
+                },
+                "userName": "10KRUNNER@TALKTALK.NET"
+            },
+            "password": "LS17 9AT",
+            "role": "",
+            "temp": false
+        }
+    ],
+    "emailAddresses": [
+        {
+            "emailAddress": "10KRUNNER@TISCALI.CO.UK",
+            "temp": false
+        },
+        {
+            "emailAddress": "10KRUNNER@TALKTALK.NET",
+            "temp": false
+        }
+    ],
+    "postalAddresses": [
+        {
+            "birthDate": "",
+            "city": "LEEDS",
+            "companyName": "",
+            "countryCode": "GBR",
+            "county": "",
+            "departmentName": "",
+            "emailAddress": {
+                "emailAddress": "10KRUNNER@TALKTALK.NET",
+                "temp": false
+            },
+            "faxNumber": "",
+            "firstName": "PETER",
+            "id": {
+                "addressCode": "ADDR-01",
+                "addressFlag": "0",
+                "customerNumber": "000002096234"
+            },
+            "lastName": "SHEPPARD",
+            "middleInitial": "",
+            "phoneNumber": "",
+            "phoneNumber2": "",
+            "phoneNumber3": "",
+            "postalCode": "LS17 9AT",
+            "state": "",
+            "street": "ROCKCLIFFE",
+            "street2": "MARGARET AVENUE",
+            "street3": "",
+            "suffix": "",
+            "temp": false,
+            "title": "MR"
+        }
+    ],
+    "subscriptionsAndOrders": {
+        "accessMaintenanceOrders": [],
+        "productOrders": [],
+        "subscriptions": [
+            {
+                "circStatus": "E",
+                "deliveryCode": "PE",
+                "expirationDate": "2013-07-05 00:00:00",
+                "finalExpirationDate": "2013-07-05 00:00:00",
+                "graceFlag": "",
+                "graceIssues": 1,
+                "id": {
+                    "customerNumber": "000002096234",
+                    "item": {
+                        "format": "NWL",
+                        "itemDemographic1": "                     50.00      ",
+                        "itemDescription": "MoneyWeek",
+                        "itemNumber": "MYK",
+                        "itemType": "CIR",
+                        "owningOrg": "982",
+                        "packageFlag": "N",
+                        "productFamily": "FRONTEND",
+                        "saleableFlag": "N",
+                        "salesTaxProductCode": "NOTTAXABLE",
+                        "serviceCode": " ",
+                        "taxCommodityCode": ""
+                    },
+                    "subRef": "000013420170"
+                },
+                "issuesRemaining": 0,
+                "lastIssue": "2014-08-01 00:00:00",
+                "memberCat": "",
+                "memberOrg": "",
+                "originalControlGroupDate": "2013-03-20 00:00:00",
+                "promoCode": "DMYKP332",
+                "promotionChoice": "1",
+                "purchaseOrderNumber": "",
+                "rate": 19.95,
+                "remainingLiability": 0.0,
+                "renewMethod": "Y",
+                "startDate": "2013-03-22 00:00:00",
+                "subType": "",
+                "temp": false,
+                "term": 13,
+                "termNumber": 5
+            },
+            {
+                "circStatus": "E",
+                "deliveryCode": "PE",
+                "expirationDate": "2011-09-05 00:00:00",
+                "finalExpirationDate": "2011-09-05 00:00:00",
+                "graceFlag": "",
+                "graceIssues": 1,
+                "id": {
+                    "customerNumber": "000002096234",
+                    "item": {
+                        "format": "NWL",
+                        "itemDemographic1": "                     50.00      ",
+                        "itemDescription": "MoneyWeek",
+                        "itemNumber": "MYK",
+                        "itemType": "CIR",
+                        "owningOrg": "982",
+                        "packageFlag": "N",
+                        "productFamily": "FRONTEND",
+                        "saleableFlag": "N",
+                        "salesTaxProductCode": "NOTTAXABLE",
+                        "serviceCode": " ",
+                        "taxCommodityCode": ""
+                    },
+                    "subRef": "000018611326"
+                },
+                "issuesRemaining": 0,
+                "lastIssue": "2014-08-01 00:00:00",
+                "memberCat": "",
+                "memberOrg": "",
+                "originalControlGroupDate": "2011-05-20 00:00:00",
+                "promoCode": "LMYKM511",
+                "promotionChoice": "1",
+                "purchaseOrderNumber": "APP545115",
+                "rate": 17.0,
+                "remainingLiability": 0.0,
+                "renewMethod": "Y",
+                "startDate": "2011-05-23 00:00:00",
+                "subType": "",
+                "temp": false,
+                "term": 13,
+                "termNumber": 1
+            },
+            {
+                "circStatus": "C",
+                "deliveryCode": "EM",
+                "expirationDate": "2019-03-24 00:00:00",
+                "finalExpirationDate": "2019-03-24 00:00:00",
+                "graceFlag": "",
+                "graceIssues": 0,
+                "id": {
+                    "customerNumber": "000002096234",
+                    "item": {
+                        "format": "EML",
+                        "itemDemographic1": "",
+                        "itemDescription": "London Investment Alert",
+                        "itemNumber": "TPL",
+                        "itemType": "CIR",
+                        "owningOrg": "983",
+                        "packageFlag": "N",
+                        "productFamily": "NO LONGER ACTIVE",
+                        "saleableFlag": "N",
+                        "salesTaxProductCode": "UKEMAIL",
+                        "serviceCode": "",
+                        "taxCommodityCode": ""
+                    },
+                    "subRef": "000041890225"
+                },
+                "issuesRemaining": 0,
+                "lastIssue": "2018-09-24 00:00:00",
+                "memberCat": "",
+                "memberOrg": "",
+                "originalControlGroupDate": "2018-03-28 00:00:00",
+                "promoCode": "ETPLU360",
+                "promotionChoice": "TPL019",
+                "purchaseOrderNumber": "18961885",
+                "rate": 37.5,
+                "remainingLiability": 0.0,
+                "renewMethod": "Y",
+                "startDate": "2018-04-10 00:00:00",
+                "subType": "",
+                "temp": false,
+                "term": 24,
+                "termNumber": 1
+            },
+            {
+                "circStatus": "R",
+                "deliveryCode": "EM",
+                "expirationDate": "2019-10-03 00:00:00",
+                "finalExpirationDate": "2019-10-03 00:00:00",
+                "graceFlag": "",
+                "graceIssues": 0,
+                "id": {
+                    "customerNumber": "000002096234",
+                    "item": {
+                        "format": "EML",
+                        "itemDemographic1": "                     14.00      ",
+                        "itemDescription": "The Price Report",
+                        "itemNumber": "TPR",
+                        "itemType": "CIR",
+                        "owningOrg": "983",
+                        "packageFlag": "N",
+                        "productFamily": "BACKEND",
+                        "saleableFlag": "S",
+                        "salesTaxProductCode": "UKEMAIL",
+                        "serviceCode": " ",
+                        "taxCommodityCode": ""
+                    },
+                    "subRef": "000045293783"
+                },
+                "issuesRemaining": 36,
+                "lastIssue": "2019-01-24 00:00:00",
+                "memberCat": null,
+                "memberOrg": "",
+                "originalControlGroupDate": "2018-10-10 00:00:00",
+                "promoCode": "VTPLFOLD",
+                "promotionChoice": "TPLFLD",
+                "purchaseOrderNumber": "",
+                "rate": 0.0,
+                "remainingLiability": 0.0,
+                "renewMethod": "A",
+                "startDate": "2018-10-11 00:00:00",
+                "subType": "",
+                "temp": false,
+                "term": 52,
+                "termNumber": 1
+            },
+            {
+                "circStatus": "R",
+                "deliveryCode": "EM",
+                "expirationDate": "2019-05-03 00:00:00",
+                "finalExpirationDate": "2019-05-03 00:00:00",
+                "graceFlag": "",
+                "graceIssues": 0,
+                "id": {
+                    "customerNumber": "000002096234",
+                    "item": {
+                        "format": "",
+                        "itemDemographic1": "",
+                        "itemDescription": "The Zero Hour Alert",
+                        "itemNumber": "ZHA",
+                        "itemType": "CIR",
+                        "owningOrg": "983",
+                        "packageFlag": "N",
+                        "productFamily": "FRONTEND",
+                        "saleableFlag": "",
+                        "salesTaxProductCode": "UKEMAIL",
+                        "serviceCode": "",
+                        "taxCommodityCode": ""
+                    },
+                    "subRef": "000045304734"
+                },
+                "issuesRemaining": 3,
+                "lastIssue": "2019-02-01 00:00:00",
+                "memberCat": null,
+                "memberOrg": "",
+                "originalControlGroupDate": "2018-10-10 00:00:00",
+                "promoCode": "VTPLFOLD",
+                "promotionChoice": "",
+                "purchaseOrderNumber": "",
+                "rate": 18.72,
+                "remainingLiability": 9.36,
+                "renewMethod": "Y",
+                "startDate": "2018-12-07 00:00:00",
+                "subType": "",
+                "temp": false,
+                "term": 6,
+                "termNumber": 1
+            }
+        ]
+    }
 }
+

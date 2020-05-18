@@ -1,8 +1,8 @@
 .PHONY: all test build clean
 
-all: test build
+all: clean test build
 
-build: test
+build: 
 	mkdir -p build
 	go build -o build ./...
 
@@ -13,4 +13,11 @@ cover:
 	go tool cover -html=tests/results/cover.out -o tests/results/cover.html
 
 clean:
+	rm -rf build/*
 	go clean ./...
+
+container:
+	podman build -t  tfld-docker-prd-local.repo.14west.io/servisbot-middleware-interface:1.14.2 .
+
+push:
+	podman push tfld-docker-prd-local.repo.14west.io/servisbot-middleware-interface:1.14.2 

@@ -1,15 +1,11 @@
 #!/bin/bash
 
-LOG_LEVEL=trace
+LOG_LEVEL=debug
 SERVER_PORT=9000
-COUCHBASE_HOST=couchbase://172.16.106.74,172.16.106.75,172.16.106.76
-COUCHBASE_DATABASE=analytics
-COUCHBASE_USER=Administrator
-COUCHBASE_PASSWORD=admin01
 VERSION=1.0.1
-COUCHBASE_BUCKET=analytics
-NAME=couchbase-push
+NAME=servisbot-middleware-interface
+URL=https://servicegateway.agora-inc.com/middleware/
 
-export LOG_LEVEL SERVER_PORT COUCHBASE_HOST COUCHBASE_DATABASE COUCHBASE_USER COUCHBASE_PASSWORD VERSION COUCHBASE_BUCKET
+export NAME LOG_LEVEL SERVER_PORT VERSION URL
 
-./microservice
+./build/microservice

@@ -1,83 +1,17 @@
 package handlers
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-couchbase-push/pkg/connectors"
-	gocb "github.com/couchbase/gocb/v2"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/connectors"
+	"github.com/gorilla/mux"
 	"github.com/microlib/simple"
 )
-
-type FakeCouchbase struct {
-}
-
-type Connectors struct {
-	Http   *http.Client
-	Bucket *FakeCouchbase
-}
-
-// RoundTripFunc .
-type RoundTripFunc func(req *http.Request) *http.Response
-
-// RoundTrip .
-func (f RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f(req), nil
-}
-
-//NewTestClient returns *http.Client with Transport replaced to avoid making real calls
-func NewHttpTestClient(fn RoundTripFunc) *http.Client {
-	return &http.Client{
-		Transport: RoundTripFunc(fn),
-	}
-}
-
-func (r *Connectors) Close() error {
-	return nil
-}
-
-func (r *Connectors) Upsert(collection string, value interface{}, opts *gocb.UpsertOptions) (*gocb.MutationResult, error) {
-	if collection == "" {
-		return &gocb.MutationResult{}, errors.New("Empty collection value")
-	}
-	//r.Bucket
-	return &gocb.MutationResult{}, nil
-}
-
-func NewTestConnectors(file string, code int, logger *simple.Logger) connectors.Clients {
-
-	// we first load the json payload to simulate a call to middleware
-	// for now just ignore failures.
-	data, err := ioutil.ReadFile(file)
-	if err != nil {
-		logger.Error(fmt.Sprintf("file data %v\n", err))
-		panic(err)
-	}
-	httpclient := NewHttpTestClient(func(req *http.Request) *http.Response {
-		return &http.Response{
-			StatusCode: code,
-			// Send response to be tested
-
-			Body: ioutil.NopCloser(bytes.NewBufferString(string(data))),
-			// Must be set to non-nil value or it panics
-			Header: make(http.Header),
-		}
-	})
-
-	conns := &Connectors{Http: httpclient}
-	return conns
-}
-
-func assertEqual(t *testing.T, a interface{}, b interface{}) {
-	if a != b {
-		t.Fatalf("%s != %s", a, b)
-	}
-}
 
 func TestAllMiddleware(t *testing.T) {
 
@@ -88,7 +22,7 @@ func TestAllMiddleware(t *testing.T) {
 		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/api/v2/sys/info/isalive", nil)
-		NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		connectors.NewTestConnectors("../../tests/emails.json", STATUS, logger)
 		handler := http.HandlerFunc(IsAlive)
 		handler.ServeHTTP(rr, req)
 
@@ -103,15 +37,25 @@ func TestAllMiddleware(t *testing.T) {
 		}
 	})
 
-	t.Run("AnalyticsHandler : should pass", func(t *testing.T) {
+	t.Run("ProfileHandler : should pass", func(t *testing.T) {
 		var STATUS int = 200
+		os.Setenv("TOKEN", "[{ \"id\": 1, \"name\": \"BH-01\", \"token\": \"1212121\"}]")
+		os.Setenv("TESTING", "true")
 		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 		rr := httptest.NewRecorder()
-		data, _ := ioutil.ReadFile("../../tests/payload.json")
-		req, _ := http.NewRequest("POST", "/api/v1/analytics", bytes.NewBuffer(data))
-		conn := NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
+		conn := connectors.NewTestConnectors("../../tests/emails.json", STATUS, logger)
+
+		//Hack to try to fake gorilla/mux vars
+		vars := map[string]string{
+			"affiliateid": "BH-01",
+			"email":       "test@test.com",
+		}
+
+		req = mux.SetURLVars(req, vars)
+
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			AnalyticsHandler(w, r, logger, conn)
+			ProfileHandler(w, r, conn)
 		})
 
 		handler.ServeHTTP(rr, req)
@@ -123,19 +67,29 @@ func TestAllMiddleware(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "IsAlive", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ProfileHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("AnalyticsHandler : should fail", func(t *testing.T) {
-		var STATUS int = 500
+	t.Run("ProfileHandler : should pass", func(t *testing.T) {
+		var STATUS int = 200
+		os.Setenv("TOKEN", "[{ \"id\": 1, \"name\": \"BH-01\", \"token\": \"1212121\"}]")
+		os.Setenv("TESTING", "true")
 		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 		rr := httptest.NewRecorder()
-		data := []byte("{ kaka  }")
-		req, _ := http.NewRequest("POST", "/api/v1/analytics", bytes.NewBuffer(data))
-		conn := NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
+		conn := connectors.NewTestConnectors("../../tests/emails.json", STATUS, logger)
+
+		//Hack to try to fake gorilla/mux vars
+		vars := map[string]string{
+			"affiliateid": "BH-01",
+			"email":       "test@test.com",
+		}
+
+		req = mux.SetURLVars(req, vars)
+
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			AnalyticsHandler(w, r, logger, conn)
+			ProfileHandler(w, r, conn)
 		})
 
 		handler.ServeHTTP(rr, req)
@@ -147,7 +101,143 @@ func TestAllMiddleware(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "IsAlive", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ProfileHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("ProfileHandler : should fail (invalid token)", func(t *testing.T) {
+		var STATUS int = 500
+		os.Setenv("TOKEN", "[{ \"id\": 1, \"name\": \"BX-01\", \"token\": \"1212121\"}]")
+		os.Setenv("TESTING", "false")
+		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
+		conn := connectors.NewTestConnectors("../../tests/emails.json", STATUS, logger)
+
+		//Hack to try to fake gorilla/mux vars
+		vars := map[string]string{
+			"affiliateid": "BH-01",
+			"email":       "test@test.com",
+		}
+
+		req = mux.SetURLVars(req, vars)
+
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ProfileHandler(w, r, conn)
+		})
+
+		handler.ServeHTTP(rr, req)
+
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ProfileHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("ProfileHandler : should fail email (json unmarshal)", func(t *testing.T) {
+		var STATUS int = 500
+		os.Setenv("TOKEN", "[{ \"id\": 1, \"name\": \"BH-01\", \"token\": \"1212121\"}]")
+		os.Setenv("TESTING", "false")
+		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
+		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+
+		//Hack to try to fake gorilla/mux vars
+		vars := map[string]string{
+			"affiliateid": "BH-01",
+			"email":       "test@test.com",
+		}
+
+		req = mux.SetURLVars(req, vars)
+
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ProfileHandler(w, r, conn)
+		})
+
+		handler.ServeHTTP(rr, req)
+
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ProfileHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("ProfileHandler : should fail profile (json unmarshal)", func(t *testing.T) {
+		var STATUS int = 500
+		os.Setenv("TOKEN", "[{ \"id\": 1, \"name\": \"BH-01\", \"token\": \"1212121\"}]")
+		os.Setenv("TESTING", "false")
+		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
+		conn := connectors.NewTestConnectors("../../tests/emails.json", STATUS, logger)
+
+		//Hack to try to fake gorilla/mux vars
+		vars := map[string]string{
+			"affiliateid": "BH-01",
+			"email":       "test@test.com",
+		}
+
+		req = mux.SetURLVars(req, vars)
+
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ProfileHandler(w, r, conn)
+		})
+
+		handler.ServeHTTP(rr, req)
+
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ProfileHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("ProfileHandler : should fail (forced request error)", func(t *testing.T) {
+		var STATUS int = 500
+		os.Setenv("TOKEN", "[{ \"id\": 1, \"name\": \"BH-01\", \"token\": \"1212121\"}]")
+		os.Setenv("TESTING", "false")
+		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
+		conn := connectors.NewTestConnectors("../../tests/emails.json", STATUS, logger)
+
+		//Hack to try to fake gorilla/mux vars
+		vars := map[string]string{
+			"affiliateid": "BH-01",
+			"email":       "test@test.com",
+		}
+
+		req = mux.SetURLVars(req, vars)
+		conn.Meta("true")
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ProfileHandler(w, r, conn)
+		})
+
+		handler.ServeHTTP(rr, req)
+
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ProfileHandler", rr.Code, STATUS))
 		}
 	})
 

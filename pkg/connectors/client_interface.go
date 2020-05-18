@@ -1,11 +1,15 @@
 package connectors
 
 import (
-	gocb "github.com/couchbase/gocb/v2"
+	"net/http"
 )
 
 // Client Interface - used as a receiver and can be overriden for testing
 type Clients interface {
-	Upsert(collection string, value interface{}, opts *gocb.UpsertOptions) (*gocb.MutationResult, error)
-	Close() error
+	Error(string, ...interface{})
+	Info(string, ...interface{})
+	Debug(string, ...interface{})
+	Trace(string, ...interface{})
+	Meta(string) string
+	Do(req *http.Request) (*http.Response, error)
 }
