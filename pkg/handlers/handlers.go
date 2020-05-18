@@ -52,8 +52,9 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clien
 		return
 	}
 
+	password := getPassword(emails, vars["email"])
 	// now make the call to get all data
-	url = os.Getenv("URL") + "/username/" + emails[0].ID.UserName + "/password/" + emails[0].Password
+	url = os.Getenv("URL") + "data/username/" + emails[0].ID.UserName + "/password/" + password
 	body, errs = makeRequest(url, token, con)
 	if err != nil {
 		con.Error(" %v", err)
@@ -159,6 +160,17 @@ func getToken(affiliate string) (string, error) {
 		return "", errors.New("Token not found")
 	}
 	return token, nil
+}
+
+func getPassword(emails []schema.EmailProfile, user string) string {
+	var pwd string
+	for x, _ := range emails {
+		if emails[x].ID.UserName == user {
+			pwd = emails[x].Password
+			break
+		}
+	}
+	return pwd
 }
 
 func injectJsonProfile(data []byte) ([]byte, error) {

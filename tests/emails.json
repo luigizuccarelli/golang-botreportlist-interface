@@ -1,11 +1,11 @@
 [{
-	"cviNbr": "000008709364",
-	"customerNumber": "000069554161",
+	"cviNbr": "00000",
+	"customerNumber": "0000",
 	"role": "",
 	"temp": false,
-	"password": "D92747",
+	"password": "sdsd",
 	"id": {
-		"userName": "TERRY48100@YAHOO.COM.AU",
+		"userName": "test@test.com",
 		"portalCode": {
 			"authGroup": "ILV"
 		},
@@ -14,13 +14,13 @@
 	"denyAccess": "N",
 	"authStatus": "A"
 }, {
-	"cviNbr": "000017639834",
-	"customerNumber": "000069554161",
+	"cviNbr": "0000",
+	"customerNumber": "0000",
 	"role": "",
 	"temp": false,
-	"password": "D92747",
+	"password": "sdsdsd",
 	"id": {
-		"userName": "TERRY48100@YAHOO.COM.AU",
+		"userName": "test@test.com",
 		"portalCode": {
 			"authGroup": "ILV"
 		},
@@ -29,13 +29,13 @@
 	"denyAccess": "N",
 	"authStatus": "A"
 }, {
-	"cviNbr": "000019459762",
-	"customerNumber": "000069554161",
+	"cviNbr": "0000",
+	"customerNumber": "0000",
 	"role": "",
 	"temp": false,
-	"password": "3215",
+	"password": "",
 	"id": {
-		"userName": "TERRY@SIRSSALES.COM",
+		"userName": "test",
 		"portalCode": {
 			"authGroup": "ILV"
 		},
@@ -44,13 +44,13 @@
 	"denyAccess": "N",
 	"authStatus": "A"
 }, {
-	"cviNbr": "000019460086",
-	"customerNumber": "000069554161",
+	"cviNbr": "0000",
+	"customerNumber": "0000",
 	"role": "",
 	"temp": false,
 	"password": "3215",
 	"id": {
-		"userName": "TERRY@SIRSSALES.COM",
+		"userName": "test@test.com",
 		"portalCode": {
 			"authGroup": "ILV"
 		},

@@ -2,28 +2,28 @@
   "accounts": [
         {
             "authStatus": "A",
-            "customerNumber": "000002096234",
-            "cviNbr": "000015977312",
+            "customerNumber": "00000",
+            "cviNbr": "0000",
             "denyAccess": "N",
             "id": {
                 "authType": "E",
                 "portalCode": {
                     "authGroup": "MYK"
                 },
-                "userName": "10KRUNNER@TALKTALK.NET"
+                "userName": "test@test.com"
             },
-            "password": "LS17 9AT",
+            "password": "asas",
             "role": "",
             "temp": false
         }
     ],
     "emailAddresses": [
         {
-            "emailAddress": "10KRUNNER@TISCALI.CO.UK",
+            "emailAddress": "itest@test.com",
             "temp": false
         },
         {
-            "emailAddress": "10KRUNNER@TALKTALK.NET",
+            "emailAddress": "test@test.com",
             "temp": false
         }
     ],
@@ -36,25 +36,25 @@
             "county": "",
             "departmentName": "",
             "emailAddress": {
-                "emailAddress": "10KRUNNER@TALKTALK.NET",
+                "emailAddress": "test@test.com",
                 "temp": false
             },
             "faxNumber": "",
-            "firstName": "PETER",
+            "firstName": "cdcdcdc",
             "id": {
                 "addressCode": "ADDR-01",
                 "addressFlag": "0",
-                "customerNumber": "000002096234"
+                "customerNumber": "00000"
             },
-            "lastName": "SHEPPARD",
+            "lastName": "dsdsdsd",
             "middleInitial": "",
             "phoneNumber": "",
             "phoneNumber2": "",
             "phoneNumber3": "",
-            "postalCode": "LS17 9AT",
+            "postalCode": "cdcdcd",
             "state": "",
-            "street": "ROCKCLIFFE",
-            "street2": "MARGARET AVENUE",
+            "street": "dsdsd",
+            "street2": "dsdsds fdfdf",
             "street3": "",
             "suffix": "",
             "temp": false,
