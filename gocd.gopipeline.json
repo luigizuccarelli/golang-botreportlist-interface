@@ -10,7 +10,7 @@
   "materials": [
     {
       "type": "git",
-      "url": "http://cicd:cicd01@gitea.cicd.svc.cluster.local:3000/servisbot-middleware-interface.git",
+      "url": "http://cicd:cicd01@gitea.cicd.svc.cluster.local:3000/cicd/servisbot-middleware-interface.git",
       "destination": null,
       "filter": null,
       "name": "scm",
