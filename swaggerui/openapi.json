@@ -11,7 +11,7 @@
     }
   },
   "paths": {
-    "/mw/api/v2/api-docs/": {
+    "/api/v2/api-docs/": {
       "get": {
         "summary": "OpenAPI 3.0 online documentation",
         "responses": {
@@ -28,7 +28,7 @@
         }
       }
     },
-    "/mw/api/v2/sys/info/isalive": {
+    "/api/v2/sys/info/isalive": {
       "get": {
         "summary": "Openshift readiness and liveliness probes",
         "responses": {
@@ -45,7 +45,7 @@
         }
       }
     },
-    "/mw/api/v1/{affiliateid}/profile/{email}": {
+    "/api/v1/{affiliateid}/profile/{email}": {
       "get": {
         "summary": "Api call that gets the profile data for a customer by email",
         "operationId": "mwgetprofile",
@@ -54,6 +54,15 @@
             "name": "affiliateid",
             "in": "path",
             "description": "affiliate id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "email",
+            "in": "path",
+            "description": "email",
             "required": true,
             "schema": {
               "type": "string"
@@ -112,7 +121,7 @@
   },
   "servers": [
     {
-      "url": "https://nginx-service-servisbot.apps.aws2-dev.ocp.14west.io",
+      "url": "https://servisbot-service-servisbot-interface.apps.aws2-dev.ocp.14west.io/",
       "variables": {
         "port": {
           "default": "443"
@@ -140,74 +149,346 @@
           "metainfo": {
             "type": "string"
           },
-          "emails": {
+          "accounts": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/EmailProfile"
+              "type": "object",
+              "properties": {
+                "authStatus": {
+                  "type": "string"
+                },
+                "customerNumber": {
+                  "type": "string"
+                },
+                "cviNbr": {
+                  "type": "string"
+                },
+                "denyAccess": {
+                  "type": "string"
+                },
+                "id": {
+                  "required": [
+                    "authType",
+                    "portalCode",
+                    "userName"
+                  ],
+                  "properties": {
+                    "authType": {
+                      "type": "string"
+                    },
+                    "portalCode": {
+                      "required": [
+                        "authGroup"
+                      ],
+                      "properties": {
+                        "authGroup": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "userName": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "password": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string"
+                },
+                "temp": {
+                  "type": "boolean"
+                }
+              }
             }
-          }
-        }
-      },
-      "EmailProfile": 
-      {
-        "required": [
-          "cviNbr",
-          "customerNumber",
-          "role",
-          "temp",
-          "password",
-          "id",
-          "denyAccess",
-          "authStatus"
-        ],
-        "properties": {
-          "cviNbr": {
-            "type": "string"
           },
-          "customerNumber": {
-            "type": "string"
+          "emailAddresses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "emailAddress": {
+                  "type": "string"
+                },
+                "temp": {
+                  "type": "boolean"
+                }
+              }
+            }
           },
-          "role": {
-            "type": "string"
+          "postalAddresses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "birthDate": {
+                  "type": "string"
+                },
+                "city": {
+                  "type": "string"
+                },
+                "companyName": {
+                  "type": "string"
+                },
+                "countryCode": {
+                  "type": "string"
+                },
+                "county": {
+                  "type": "string"
+                },
+                "departmentName": {
+                  "type": "string"
+                },
+                "emailAddress": {
+                  "required": [
+                    "emailAddress",
+                    "temp"
+                  ],
+                  "properties": {
+                    "emailAddress": {
+                      "type": "string"
+                    },
+                    "temp": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "faxNumber": {
+                  "type": "string"
+                },
+                "firstName": {
+                  "type": "string"
+                },
+                "id": {
+                  "required": [
+                    "addressCode",
+                    "addressFlag",
+                    "customerNumber"
+                  ],
+                  "properties": {
+                    "addressCode": {
+                      "type": "string"
+                    },
+                    "addressFlag": {
+                      "type": "string"
+                    },
+                    "customerNumber": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "lastName": {
+                  "type": "string"
+                },
+                "middleInitial": {
+                  "type": "string"
+                },
+                "phoneNumber": {
+                  "type": "string"
+                },
+                "phoneNumber2": {
+                  "type": "string"
+                },
+                "phoneNumber3": {
+                  "type": "string"
+                },
+                "postalCode": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string"
+                },
+                "street": {
+                  "type": "string"
+                },
+                "street2": {
+                  "type": "string"
+                },
+                "street3": {
+                  "type": "string"
+                },
+                "suffix": {
+                  "type": "string"
+                },
+                "temp": {
+                  "type": "boolean"
+                },
+                "title": {
+                  "type": "string"
+                }
+              }
+            }
           },
-          "temp": {
-            "type": "boolean"
-          },
-          "password": {
-            "type": "string"
-          },
-          "id": {
+          "subscriptionsAndOrders": {
             "required": [
-                "userName",
-                "portalCode",
-                "authType"
+              "accessMaintenanceOrders",
+              "productOrders",
+              "subscriptions"
             ],
             "properties": {
-              "userName": {
-                "type": "string"
+              "accessMaintenanceOrders": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
               },
-              "portalCode": {
-                "required": [
-                  "authGroup"
-                ],
-                "properties": {
-                  "authGroup": {
-                    "type": "string"
+              "productOrders": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "subscriptions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "circStatus": {
+                      "type": "string"
+                    },
+                    "deliveryCode": {
+                      "type": "string"
+                    },
+                    "expirationDate": {
+                      "type": "string"
+                    },
+                    "finalExpirationDate": {
+                      "type": "string"
+                    },
+                    "graceFlag": {
+                      "type": "string"
+                    },
+                    "graceIssues": {
+                      "type": "number"
+                    },
+                    "id": {
+                      "required": [
+                        "customerNumber",
+                        "item",
+                        "subRef"
+                      ],
+                      "properties": {
+                        "customerNumber": {
+                          "type": "string"
+                        },
+                        "item": {
+                          "required": [
+                            "format",
+                            "itemDemographic1",
+                            "itemDescription",
+                            "itemNumber",
+                            "itemType",
+                            "owningOrg",
+                            "packageFlag",
+                            "productFamily",
+                            "saleableFlag",
+                            "salesTaxProductCode",
+                            "serviceCode",
+                            "taxCommodityCode"
+                          ],
+                          "properties": {
+                            "format": {
+                              "type": "string"
+                            },
+                            "itemDemographic1": {
+                              "type": "string"
+                            },
+                            "itemDescription": {
+                              "type": "string"
+                            },
+                            "itemNumber": {
+                              "type": "string"
+                            },
+                            "itemType": {
+                              "type": "string"
+                            },
+                            "owningOrg": {
+                              "type": "string"
+                            },
+                            "packageFlag": {
+                              "type": "string"
+                            },
+                            "productFamily": {
+                              "type": "string"
+                            },
+                            "saleableFlag": {
+                              "type": "string"
+                            },
+                            "salesTaxProductCode": {
+                              "type": "string"
+                            },
+                            "serviceCode": {
+                              "type": "string"
+                            },
+                            "taxCommodityCode": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "subRef": {
+                          "type": "string"
+                        } 
+                      },
+                      "type": "object"
+                    },
+                    "issuesRemaining": {
+                      "type": "number"
+                    },
+                    "lastIssue": {
+                      "type": "string"
+                    },
+                    "memberCat": {
+                      "type": "string"
+                    },
+                    "memberOrg": {
+                      "type": "string"
+                    },
+                    "originalControlGroupDate": {
+                      "type": "string"
+                    },
+                    "promoCode": {
+                      "type": "string"
+                    },
+                    "promotionChoice": {
+                      "type": "string"
+                    },
+                    "purchaseOrderNumber": {
+                      "type": "string"
+                    },
+                    "rate": {
+                     "type": "number"
+                    },
+                    "remainingLiability": {
+                      "type": "number"
+                    },
+                    "renewMethod": {
+                      "type": "string"
+                    },
+                    "startDate": {
+                      "type": "string"
+                    },
+                    "subType": {
+                      "type": "string"
+                    },
+                    "temp": {
+                      "type": "boolean"
+                    },
+                    "term": {
+                      "type": "number"
+                    },
+                    "termNumber": {
+                      "type": "number"
+                    }
                   }
-                },
-                "type": "object"
-              },
-              "authType": {
-                "type": "string"
+                }
               }
-            },
-            "type": "object"
-          },
-          "denyAccess": {
-            "type": "string"
-          },
-          "authStatus": {
-            "type": "string"
+            }
           }
         }
       },

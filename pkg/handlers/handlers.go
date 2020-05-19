@@ -81,8 +81,8 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clien
 		return
 	}
 
-	msg := "MW data successfully retrieved"
-	con.Trace(msg, si)
+	msg := "MW data successfully retrieved "
+	con.Trace(msg+" %v", si)
 	response := &schema.Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: fmt.Sprintf(msg), Payload: si}
 	w.WriteHeader(http.StatusOK)
 	b, _ := json.MarshalIndent(response, "", "	")
