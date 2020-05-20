@@ -6,9 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/connectors"
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/handlers"
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/validator"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-lytics-interface/pkg/connectors"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-lytics-interface/pkg/handlers"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-lytics-interface/pkg/validator"
 	"github.com/gorilla/mux"
 	"github.com/microlib/simple"
 )
@@ -28,8 +28,8 @@ func startHttpServer(con connectors.Clients) *http.Server {
 
 	r.HandleFunc("/api/v2/sys/info/isalive", handlers.IsAlive).Methods("GET")
 
-	sh := http.StripPrefix("/api/v2/api-docs/", http.FileServer(http.Dir("./swaggerui/")))
-	r.PathPrefix("/api/v2/api-docs/").Handler(sh)
+	//sh := http.StripPrefix("/api/v2/api-docs/", http.FileServer(http.Dir("./swaggerui/")))
+	//r.PathPrefix("/api/v2/api-docs/").Handler(sh)
 
 	http.Handle("/", r)
 

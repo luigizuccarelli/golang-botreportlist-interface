@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"os"
 
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/connectors"
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/schema"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-lytics-interface/pkg/connectors"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-lytics-interface/pkg/schema"
 	"github.com/gorilla/mux"
 )
 
@@ -20,7 +20,6 @@ const (
 
 func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
 	var si *schema.SchemaInterface
-	var emails []schema.EmailProfile
 	var vars = mux.Vars(r)
 
 	addHeaders(w, r)
@@ -34,42 +33,13 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clien
 		return
 	}
 
-	url := os.Getenv("URL") + "/account/emailaddress?email=" + vars["email"]
+	url := os.Getenv("URL") + token
 	body, errs := makeRequest(url, token, con)
-	if errs != nil {
-		con.Error(" %v", errs)
-		b := responseFormat(true, w, " %v", errs)
-		fmt.Fprintf(w, string(b))
-		return
-	}
-
-	errs = json.Unmarshal(body, &emails)
-	if errs != nil {
-		msg := "Could not unmarshal email message data to schema %v"
-		con.Error(msg, errs)
-		b := responseFormat(true, w, msg, err)
-		fmt.Fprintf(w, string(b))
-		return
-	}
-
-	password := getPassword(emails, vars["email"])
-	// now make the call to get all data
-	url = os.Getenv("URL") + "data/username/" + emails[0].ID.UserName + "/password/" + password
-	body, errs = makeRequest(url, token, con)
 	if err != nil {
 		con.Error(" %v", err)
 		b := responseFormat(true, w, " %v", err)
 		fmt.Fprintf(w, string(b))
 		return
-	}
-
-	// only used in testing to intercept and inject profile data
-	if os.Getenv("TESTING") != "" && os.Getenv("TESTING") == "true" {
-		body, err = injectJsonProfile(body)
-		// just report the error
-		if err != nil {
-			con.Error("injectJsonProfile - testing  %v", err)
-		}
 	}
 
 	errs = json.Unmarshal(body, &si)
@@ -81,7 +51,7 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clien
 		return
 	}
 
-	msg := "MW data successfully retrieved "
+	msg := "Lytics data successfully retrieved "
 	con.Trace(msg+" %v", si)
 	response := &schema.Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: fmt.Sprintf(msg), Payload: si}
 	w.WriteHeader(http.StatusOK)
@@ -160,26 +130,4 @@ func getToken(affiliate string) (string, error) {
 		return "", errors.New("Token not found")
 	}
 	return token, nil
-}
-
-func getPassword(emails []schema.EmailProfile, user string) string {
-	var pwd string
-	for x, _ := range emails {
-		if emails[x].ID.UserName == user {
-			pwd = emails[x].Password
-			break
-		}
-	}
-	return pwd
-}
-
-func injectJsonProfile(data []byte) ([]byte, error) {
-	// only used for testing
-	var b []byte
-	var err error
-	b, err = ioutil.ReadFile("../../tests/payload.json")
-	if err != nil {
-		return b, err
-	}
-	return b, err
 }

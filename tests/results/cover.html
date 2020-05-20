@@ -54,9 +54,9 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/handlers/handlers.go (88.7%)</option>
+				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-lytics-interface/pkg/handlers/handlers.go (75.0%)</option>
 				
-				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/validator/validate.go (100.0%)</option>
+				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-lytics-interface/pkg/validator/validate.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -80,8 +80,8 @@ import (
         "net/http"
         "os"
 
-        "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/connectors"
-        "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/schema"
+        "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-lytics-interface/pkg/connectors"
+        "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-lytics-interface/pkg/schema"
         "github.com/gorilla/mux"
 )
 
@@ -92,7 +92,6 @@ const (
 
 func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) <span class="cov8" title="1">{
         var si *schema.SchemaInterface
-        var emails []schema.EmailProfile
         var vars = mux.Vars(r)
 
         addHeaders(w, r)
@@ -106,42 +105,14 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clien
                 return
         }</span>
 
-        <span class="cov8" title="1">url := os.Getenv("URL") + "/account/emailaddress?email=" + vars["email"]
+        <span class="cov8" title="1">url := os.Getenv("URL") + token
         body, errs := makeRequest(url, token, con)
-        if errs != nil </span><span class="cov8" title="1">{
-                con.Error(" %v", errs)
-                b := responseFormat(true, w, " %v", errs)
-                fmt.Fprintf(w, string(b))
-                return
-        }</span>
-
-        <span class="cov8" title="1">errs = json.Unmarshal(body, &amp;emails)
-        if errs != nil </span><span class="cov8" title="1">{
-                msg := "Could not unmarshal email message data to schema %v"
-                con.Error(msg, errs)
-                b := responseFormat(true, w, msg, err)
-                fmt.Fprintf(w, string(b))
-                return
-        }</span>
-
-        // now make the call to get all data
-        <span class="cov8" title="1">url = os.Getenv("URL") + "/username/" + emails[0].ID.UserName + "/password/" + emails[0].Password
-        body, errs = makeRequest(url, token, con)
         if err != nil </span><span class="cov0" title="0">{
                 con.Error(" %v", err)
                 b := responseFormat(true, w, " %v", err)
                 fmt.Fprintf(w, string(b))
                 return
         }</span>
-
-        // only used in testing to intercept and inject profile data
-        <span class="cov8" title="1">if os.Getenv("TESTING") != "" &amp;&amp; os.Getenv("TESTING") == "true" </span><span class="cov8" title="1">{
-                body, err = injectJsonProfile(body)
-                // just report the error
-                if err != nil </span><span class="cov0" title="0">{
-                        con.Error("injectJsonProfile - testing  %v", err)
-                }</span>
-        }
 
         <span class="cov8" title="1">errs = json.Unmarshal(body, &amp;si)
         if errs != nil </span><span class="cov8" title="1">{
@@ -152,8 +123,8 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clien
                 return
         }</span>
 
-        <span class="cov8" title="1">msg := "MW data successfully retrieved"
-        con.Trace(msg, si)
+        <span class="cov8" title="1">msg := "Lytics data successfully retrieved "
+        con.Trace(msg+" %v", si)
         response := &amp;schema.Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: fmt.Sprintf(msg), Payload: si}
         w.WriteHeader(http.StatusOK)
         b, _ := json.MarshalIndent(response, "", "        ")
@@ -233,7 +204,18 @@ func getToken(affiliate string) (string, error) <span class="cov8" title="1">{
         <span class="cov8" title="1">return token, nil</span>
 }
 
-func injectJsonProfile(data []byte) ([]byte, error) <span class="cov8" title="1">{
+func getPassword(emails []schema.EmailProfile, user string) string <span class="cov0" title="0">{
+        var pwd string
+        for x, _ := range emails </span><span class="cov0" title="0">{
+                if emails[x].ID.UserName == user </span><span class="cov0" title="0">{
+                        pwd = emails[x].Password
+                        break</span>
+                }
+        }
+        <span class="cov0" title="0">return pwd</span>
+}
+
+func injectJsonProfile(data []byte) ([]byte, error) <span class="cov0" title="0">{
         // only used for testing
         var b []byte
         var err error
@@ -241,7 +223,7 @@ func injectJsonProfile(data []byte) ([]byte, error) <span class="cov8" title="1"
         if err != nil </span><span class="cov0" title="0">{
                 return b, err
         }</span>
-        <span class="cov8" title="1">return b, err</span>
+        <span class="cov0" title="0">return b, err</span>
 }
 </pre>
 		

@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-middleware-interface/pkg/connectors"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-lytics-interface/pkg/connectors"
 	"github.com/gorilla/mux"
 	"github.com/microlib/simple"
 )
@@ -22,7 +22,7 @@ func TestAllMiddleware(t *testing.T) {
 		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/api/v2/sys/info/isalive", nil)
-		connectors.NewTestConnectors("../../tests/emails.json", STATUS, logger)
+		connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 		handler := http.HandlerFunc(IsAlive)
 		handler.ServeHTTP(rr, req)
 
@@ -44,7 +44,7 @@ func TestAllMiddleware(t *testing.T) {
 		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
-		conn := connectors.NewTestConnectors("../../tests/emails.json", STATUS, logger)
+		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -78,7 +78,7 @@ func TestAllMiddleware(t *testing.T) {
 		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
-		conn := connectors.NewTestConnectors("../../tests/emails.json", STATUS, logger)
+		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -112,7 +112,7 @@ func TestAllMiddleware(t *testing.T) {
 		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
-		conn := connectors.NewTestConnectors("../../tests/emails.json", STATUS, logger)
+		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -180,7 +180,7 @@ func TestAllMiddleware(t *testing.T) {
 		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
-		conn := connectors.NewTestConnectors("../../tests/emails.json", STATUS, logger)
+		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -214,7 +214,7 @@ func TestAllMiddleware(t *testing.T) {
 		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
-		conn := connectors.NewTestConnectors("../../tests/emails.json", STATUS, logger)
+		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{

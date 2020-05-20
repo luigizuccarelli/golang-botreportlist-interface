@@ -1,21 +1,21 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: kaniko-servisbot-middleware-interface
+  name: kaniko-trackmate-lytics-interface
 spec:
   parallelism: 1    
   completions: 1    
   template:         
     metadata:
-      name: kaniko-servisbot-middleware-interface
+      name: kaniko-trackmate-lytics-interface
     spec:
       containers:
       - name: kaniko
         image: gcr.io/kaniko-project/executor:latest
         args: [
-          "--dockerfile=/godata/pipelines/servisbot-middleware-interface/Dockerfile",
-          "--context=/godata/pipelines/servisbot-middleware-interface",
-          "--destination=tfld-docker-prd-local.repo.14west.io/servisbot-middleware-interface:1.14.2"
+          "--dockerfile=/godata/pipelines/trackmate-lytics-interface/Dockerfile",
+          "--context=/godata/pipelines/trackmate-lytics-interface",
+          "--destination=tfld-docker-prd-local.repo.14west.io/trackmate-lytics-interface:1.14.2"
         ]
         volumeMounts:
         - mountPath: /godata
@@ -25,7 +25,7 @@ spec:
           subPath: config.json
         env:
         - name: DESITINATION
-          value: tfld-docker-prd-local.repo.14west.io/servisbot-middleware-interface:1.14.2 
+          value: tfld-docker-prd-local.repo.14west.io/trackmate-lytics-interface:1.14.2 
       restartPolicy: Never   
       volumes:
       - name: gocdagent-data
