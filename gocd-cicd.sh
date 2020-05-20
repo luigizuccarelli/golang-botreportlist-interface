@@ -3,9 +3,9 @@
 # All parameter fields are required for the script to execute
 
 # declare some variables
-PROJECT="trackmate-lytics-interface"
-jobname="kaniko-trackmate-lytics-interface"
-deploymentconfig="trackmate-lytics-interface"
+PROJECT="servisbot-lytics-interface"
+jobname="kaniko-servisbot-lytics-interface"
+deploymentconfig="servisbot-lytics-interface"
 namespace="trackmate-pilot"
 
 

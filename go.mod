@@ -1,4 +1,4 @@
-module gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/trackmate-lytics-interface
+module gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-lytics-interface
 
 go 1.14
 

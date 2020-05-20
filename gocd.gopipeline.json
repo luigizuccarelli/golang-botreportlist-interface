@@ -2,15 +2,15 @@
   "format_version" : 1,
   "label_template": "${COUNT}",
   "enable_pipeline_locking": false,
-  "name": "trackmate-lytics-interface",
-  "group" : "Trackmate",
+  "name": "servisbot-lytics-interface",
+  "group" : "ServisBOT",
   "tracking_tool": null,
   "timer": null,
   "environment_variables": [],
   "materials": [
     {
       "type": "git",
-      "url": "http://cicd:cicd01@gitea.cicd.svc.cluster.local:3000/cicd/trackmate-lytics-interface.git",
+      "url": "http://cicd:cicd01@gitea.cicd.svc.cluster.local:3000/cicd/servisbot-lytics-interface.git",
       "destination": null,
       "filter": null,
       "name": "scm",
