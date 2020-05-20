@@ -3,10 +3,10 @@
 # All parameter fields are required for the script to execute
 
 # declare some variables
-PROJECT="servisbot-middleware-interface"
-jobname="kaniko-servisbot-middleware-interface"
-deploymentconfig="servisbot-middleware-interface"
-namespace="servisbot-interface"
+PROJECT="trackmate-lytics-interface"
+jobname="kaniko-trackmate-lytics-interface"
+deploymentconfig="trackmate-lytics-interface"
+namespace="trackmate-pilot"
 
 
 # some variable checks
