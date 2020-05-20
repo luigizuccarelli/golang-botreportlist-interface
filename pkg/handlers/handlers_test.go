@@ -40,7 +40,6 @@ func TestAllMiddleware(t *testing.T) {
 	t.Run("ProfileHandler : should pass", func(t *testing.T) {
 		var STATUS int = 200
 		os.Setenv("TOKEN", "[{ \"id\": 1, \"name\": \"BH-01\", \"token\": \"1212121\"}]")
-		os.Setenv("TESTING", "true")
 		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
@@ -74,7 +73,6 @@ func TestAllMiddleware(t *testing.T) {
 	t.Run("ProfileHandler : should pass", func(t *testing.T) {
 		var STATUS int = 200
 		os.Setenv("TOKEN", "[{ \"id\": 1, \"name\": \"BH-01\", \"token\": \"1212121\"}]")
-		os.Setenv("TESTING", "true")
 		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
@@ -108,41 +106,6 @@ func TestAllMiddleware(t *testing.T) {
 	t.Run("ProfileHandler : should fail (invalid token)", func(t *testing.T) {
 		var STATUS int = 500
 		os.Setenv("TOKEN", "[{ \"id\": 1, \"name\": \"BX-01\", \"token\": \"1212121\"}]")
-		os.Setenv("TESTING", "false")
-		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-
-		//Hack to try to fake gorilla/mux vars
-		vars := map[string]string{
-			"affiliateid": "BH-01",
-			"email":       "test@test.com",
-		}
-
-		req = mux.SetURLVars(req, vars)
-
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ProfileHandler(w, r, conn)
-		})
-
-		handler.ServeHTTP(rr, req)
-
-		body, e := ioutil.ReadAll(rr.Body)
-		if e != nil {
-			t.Fatalf("Should not fail : found error %v", e)
-		}
-		logger.Trace(fmt.Sprintf("Response %s", string(body)))
-		// ignore errors here
-		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ProfileHandler", rr.Code, STATUS))
-		}
-	})
-
-	t.Run("ProfileHandler : should fail email (json unmarshal)", func(t *testing.T) {
-		var STATUS int = 500
-		os.Setenv("TOKEN", "[{ \"id\": 1, \"name\": \"BH-01\", \"token\": \"1212121\"}]")
-		os.Setenv("TESTING", "false")
 		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
@@ -176,11 +139,10 @@ func TestAllMiddleware(t *testing.T) {
 	t.Run("ProfileHandler : should fail profile (json unmarshal)", func(t *testing.T) {
 		var STATUS int = 500
 		os.Setenv("TOKEN", "[{ \"id\": 1, \"name\": \"BH-01\", \"token\": \"1212121\"}]")
-		os.Setenv("TESTING", "false")
 		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		conn := connectors.NewTestConnectors("../../tests/fail.json", STATUS, logger)
 
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -210,7 +172,6 @@ func TestAllMiddleware(t *testing.T) {
 	t.Run("ProfileHandler : should fail (forced request error)", func(t *testing.T) {
 		var STATUS int = 500
 		os.Setenv("TOKEN", "[{ \"id\": 1, \"name\": \"BH-01\", \"token\": \"1212121\"}]")
-		os.Setenv("TESTING", "false")
 		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/api/v1/BH-01/profile/test@test.com", nil)
