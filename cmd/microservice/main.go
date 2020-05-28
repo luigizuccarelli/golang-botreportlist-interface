@@ -17,12 +17,13 @@ var (
 	logger *simple.Logger
 )
 
+// startHttpServer - private function
 func startHttpServer(con connectors.Clients) *http.Server {
 	srv := &http.Server{Addr: ":" + os.Getenv("SERVER_PORT")}
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/api/v1/{affiliateid}/profile/{email}", func(w http.ResponseWriter, req *http.Request) {
+	r.HandleFunc("/api/v1/profile/{email}", func(w http.ResponseWriter, req *http.Request) {
 		handlers.ProfileHandler(w, req, con)
 	}).Methods("GET", "OPTIONS")
 
@@ -42,6 +43,7 @@ func startHttpServer(con connectors.Clients) *http.Server {
 	return srv
 }
 
+// main - no need for any explanation
 func main() {
 
 	if os.Getenv("LOG_LEVEL") == "" {

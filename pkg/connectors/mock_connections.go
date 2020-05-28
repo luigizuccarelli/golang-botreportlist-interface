@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"testing"
 
 	"github.com/microlib/simple"
 )
@@ -18,27 +17,33 @@ type MockConnectors struct {
 	Flag   string
 }
 
+// Error - log wrapper
 func (c *MockConnectors) Error(msg string, val ...interface{}) {
 	c.Logger.Error(fmt.Sprintf(msg, val...))
 }
 
+// Info - log wrapper
 func (c *MockConnectors) Info(msg string, val ...interface{}) {
 	c.Logger.Info(fmt.Sprintf(msg, val...))
 }
 
+// Debug - log wrapper
 func (c *MockConnectors) Debug(msg string, val ...interface{}) {
 	c.Logger.Debug(fmt.Sprintf(msg, val...))
 }
 
+// Trace - log wrapper
 func (c *MockConnectors) Trace(msg string, val ...interface{}) {
 	c.Logger.Trace(fmt.Sprintf(msg, val...))
 }
 
+// Meta - log wrapper
 func (c *MockConnectors) Meta(flag string) string {
 	c.Flag = flag
 	return flag
 }
 
+// Do - log wrapper
 func (c *MockConnectors) Do(req *http.Request) (*http.Response, error) {
 	if c.Flag == "true" {
 		return nil, errors.New("forced http error")
@@ -61,6 +66,7 @@ func NewHttpTestClient(fn RoundTripFunc) *http.Client {
 	}
 }
 
+// NewTestConnector - creates all test connectors
 func NewTestConnectors(file string, code int, logger *simple.Logger) Clients {
 
 	// we first load the json payload to simulate a call to middleware
@@ -83,10 +89,4 @@ func NewTestConnectors(file string, code int, logger *simple.Logger) Clients {
 
 	conns := &MockConnectors{Http: httpclient, Logger: logger, Flag: "false"}
 	return conns
-}
-
-func assertEqual(t *testing.T, a interface{}, b interface{}) {
-	if a != b {
-		t.Fatalf("%s != %s", a, b)
-	}
 }

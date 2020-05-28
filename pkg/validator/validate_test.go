@@ -8,6 +8,7 @@ import (
 	"github.com/microlib/simple"
 )
 
+// TestEnvars - test entry point
 func TestEnvars(t *testing.T) {
 	logger := &simple.Logger{Level: "trace"}
 

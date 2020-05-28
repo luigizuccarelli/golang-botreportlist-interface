@@ -2,7 +2,7 @@
     "data": {
         "segments": [
             "all",
-            "smt_unscored"
+            "smt_active"
         ],
         "segments_all": [
             "1fa6ae62cf105c1a3313ec785919fc8a",

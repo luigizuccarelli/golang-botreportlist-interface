@@ -2,7 +2,7 @@
     "data": {
         "segments": [
             "all",
-            "smt_unscored"
+            "not found"
         ],
         "segments_all": [
             "1fa6ae62cf105c1a3313ec785919fc8a",
@@ -10,7 +10,7 @@
             "c3f16c66de32ff39cb7b6194f78e7835"
         ]
     },
-    "message": "success",
+    "message": "not found",
     "meta": {
         "by_fields": [
             "email",
