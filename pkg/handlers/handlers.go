@@ -17,6 +17,10 @@ import (
 const (
 	CONTENTTYPE     string = "Content-Type"
 	APPLICATIONJSON string = "application/json"
+	PROFILEHANDLER  string = "ProfileHandler %v"
+	HANDLERESPONSE  string = "Function handleResponse "
+	ACTIVE          string = "smt_active"
+	POWER           string = "smt_power"
 )
 
 // ProfileHandler - handler that calls lytics audience endpoint
@@ -30,20 +34,20 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clien
 	token := os.Getenv("TOKEN")
 	if token == "" || email == "" {
 		err := errors.New("input params token/email are empty")
-		con.Error("ProfileHandler %v", err)
-		b := responseError(w, "ProfileHandler %v", err)
+		con.Error(PROFILEHANDLER, err)
+		b := responseError(w, PROFILEHANDLER, err)
 		fmt.Fprintf(w, string(b))
 		return
 	}
 
 	// we first check the smt_power audience
-	res := strings.NewReplacer("{email}", email, "{token}", token, "{audience}", "smt_power")
+	res := strings.NewReplacer("{email}", email, "{token}", token, "{audience}", POWER)
 	// Replace all pairs.
 	url := res.Replace(os.Getenv("URL"))
 	body, errs := makeRequest(url, con)
 	if errs != nil {
-		con.Error("ProfileHandler %v", errs)
-		b := responseError(w, "ProfileHandler %v", errs)
+		con.Error(PROFILEHANDLER, errs)
+		b := responseError(w, PROFILEHANDLER, errs)
 		fmt.Fprintf(w, string(b))
 		return
 	}
@@ -62,21 +66,21 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clien
 	if audience.Status == 200 {
 		// we should usually get success
 		// check in  "highly engaged audience" list
-		data, bFlag := handleResponse(audience, "smt_power", con)
+		data, bFlag := handleResponse(audience, POWER, con)
 		if bFlag {
 			w.WriteHeader(http.StatusOK)
 			fmt.Fprintf(w, string(data))
 			return
 		} else {
 			// check in "currently engaged audience" list
-			data, bFlag = handleResponse(audience, "smt_active", con)
-			res = strings.NewReplacer("{email}", email, "{token}", token, "{audience}", "smt_active")
+			data, bFlag = handleResponse(audience, ACTIVE, con)
+			res = strings.NewReplacer("{email}", email, "{token}", token, "{audience}", ACTIVE)
 			// Replace all pairs.
 			url = res.Replace(os.Getenv("URL"))
 			body, errs = makeRequest(url, con)
 			if errs != nil {
-				con.Error("ProfileHandler %v", errs)
-				b := responseError(w, "ProfileHandler %v", errs)
+				con.Error(PROFILEHANDLER, errs)
+				b := responseError(w, PROFILEHANDLER, errs)
 				fmt.Fprintf(w, string(b))
 				return
 			}
@@ -90,14 +94,14 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clien
 				return
 			}
 
-			data, _ := handleResponse(audience, "smt_active", con)
+			data, _ := handleResponse(audience, ACTIVE, con)
 			fmt.Fprintf(w, string(data))
 			w.WriteHeader(http.StatusOK)
 			return
 		}
 	}
 
-	msg := "ProfileHandler %v"
+	msg := PROFILEHANDLER
 	err := errors.New("lytics request error")
 	con.Error(msg, err)
 	b := responseError(w, msg, err)
@@ -107,12 +111,17 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clien
 
 // IsAlive - endpoint call used for openshift readiness and liveliness probes
 func IsAlive(w http.ResponseWriter, r *http.Request) {
+	// add header
+	addHeader(w, r)
 	fmt.Fprintf(w, "{ \"version\" : \""+os.Getenv("VERSION")+"\" , \"name\": \""+os.Getenv("NAME")+"\" }")
 	return
 }
 
 // headers (with cors) utility
 func addHeaders(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("API-KEY") {
+		w.Header().Set("API_KEY_PT", r.Header.Get("API_KEY"))
+	}
 	w.Header().Set(CONTENTTYPE, APPLICATIONJSON)
 	// use this for cors
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -136,20 +145,20 @@ func handleResponse(a *schema.AudienceSchema, list string, con connectors.Client
 	if a.Message == "success" {
 		if contains(a.Data.Segments, list) {
 			msg := "engaged : " + list
-			con.Debug("Function handleResponse "+msg, "")
+			con.Debug(HANDLERESPONSE+msg+"%s", "")
 			response := &schema.Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: msg}
 			b, _ = json.MarshalIndent(response, "", "	")
 			return b, true
 		} else {
 			msg := "engaged : none"
-			con.Debug("Function handleResponse "+msg, "")
+			con.Debug(HANDLERESPONSE+msg+"%s", "")
 			response := &schema.Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: msg}
 			b, _ = json.MarshalIndent(response, "", "	")
 			return b, false
 		}
 	}
-	msg := "engaged : not found"
-	con.Debug("Function handleResponse "+msg, "")
+	msg := "engaged : not found %s"
+	con.Debug(HANDLERESPONSE+msg+"%s", "")
 	response := &schema.Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: msg}
 	b, _ = json.MarshalIndent(response, "", "	")
 	return b, false
