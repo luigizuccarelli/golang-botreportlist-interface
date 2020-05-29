@@ -54,7 +54,7 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-lytics-interface/pkg/handlers/handlers.go (89.5%)</option>
+				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-lytics-interface/pkg/handlers/handlers.go (88.9%)</option>
 				
 				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-lytics-interface/pkg/validator/validate.go (100.0%)</option>
 				
@@ -89,6 +89,10 @@ import (
 const (
         CONTENTTYPE     string = "Content-Type"
         APPLICATIONJSON string = "application/json"
+        PROFILEHANDLER  string = "ProfileHandler %v"
+        HANDLERESPONSE  string = "Function handleResponse "
+        ACTIVE          string = "smt_active"
+        POWER           string = "smt_power"
 )
 
 // ProfileHandler - handler that calls lytics audience endpoint
@@ -102,20 +106,20 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clien
         token := os.Getenv("TOKEN")
         if token == "" || email == "" </span><span class="cov8" title="1">{
                 err := errors.New("input params token/email are empty")
-                con.Error("ProfileHandler %v", err)
-                b := responseError(w, "ProfileHandler %v", err)
+                con.Error(PROFILEHANDLER, err)
+                b := responseError(w, PROFILEHANDLER, err)
                 fmt.Fprintf(w, string(b))
                 return
         }</span>
 
         // we first check the smt_power audience
-        <span class="cov8" title="1">res := strings.NewReplacer("{email}", email, "{token}", token, "{audience}", "smt_power")
+        <span class="cov8" title="1">res := strings.NewReplacer("{email}", email, "{token}", token, "{audience}", POWER)
         // Replace all pairs.
         url := res.Replace(os.Getenv("URL"))
         body, errs := makeRequest(url, con)
         if errs != nil </span><span class="cov8" title="1">{
-                con.Error("ProfileHandler %v", errs)
-                b := responseError(w, "ProfileHandler %v", errs)
+                con.Error(PROFILEHANDLER, errs)
+                b := responseError(w, PROFILEHANDLER, errs)
                 fmt.Fprintf(w, string(b))
                 return
         }</span>
@@ -134,21 +138,21 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clien
         <span class="cov8" title="1">if audience.Status == 200 </span><span class="cov8" title="1">{
                 // we should usually get success
                 // check in  "highly engaged audience" list
-                data, bFlag := handleResponse(audience, "smt_power", con)
+                data, bFlag := handleResponse(audience, POWER, con)
                 if bFlag </span><span class="cov8" title="1">{
                         w.WriteHeader(http.StatusOK)
                         fmt.Fprintf(w, string(data))
                         return
                 }</span> else<span class="cov8" title="1"> {
                         // check in "currently engaged audience" list
-                        data, bFlag = handleResponse(audience, "smt_active", con)
-                        res = strings.NewReplacer("{email}", email, "{token}", token, "{audience}", "smt_active")
+                        data, bFlag = handleResponse(audience, ACTIVE, con)
+                        res = strings.NewReplacer("{email}", email, "{token}", token, "{audience}", ACTIVE)
                         // Replace all pairs.
                         url = res.Replace(os.Getenv("URL"))
                         body, errs = makeRequest(url, con)
                         if errs != nil </span><span class="cov0" title="0">{
-                                con.Error("ProfileHandler %v", errs)
-                                b := responseError(w, "ProfileHandler %v", errs)
+                                con.Error(PROFILEHANDLER, errs)
+                                b := responseError(w, PROFILEHANDLER, errs)
                                 fmt.Fprintf(w, string(b))
                                 return
                         }</span>
@@ -162,14 +166,14 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clien
                                 return
                         }</span>
 
-                        <span class="cov8" title="1">data, _ := handleResponse(audience, "smt_active", con)
+                        <span class="cov8" title="1">data, _ := handleResponse(audience, ACTIVE, con)
                         fmt.Fprintf(w, string(data))
                         w.WriteHeader(http.StatusOK)
                         return</span>
                 }
         }
 
-        <span class="cov8" title="1">msg := "ProfileHandler %v"
+        <span class="cov8" title="1">msg := PROFILEHANDLER
         err := errors.New("lytics request error")
         con.Error(msg, err)
         b := responseError(w, msg, err)
@@ -179,18 +183,23 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clien
 
 // IsAlive - endpoint call used for openshift readiness and liveliness probes
 func IsAlive(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        // add header
+        addHeaders(w, r)
         fmt.Fprintf(w, "{ \"version\" : \""+os.Getenv("VERSION")+"\" , \"name\": \""+os.Getenv("NAME")+"\" }")
         return
 }</span>
 
 // headers (with cors) utility
 func addHeaders(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        w.Header().Set(CONTENTTYPE, APPLICATIONJSON)
+        if r.Header.Get("API-KEY") != "" </span><span class="cov0" title="0">{
+                w.Header().Set("API_KEY_PT", r.Header.Get("API_KEY"))
+        }</span>
+        <span class="cov8" title="1">w.Header().Set(CONTENTTYPE, APPLICATIONJSON)
         // use this for cors
         w.Header().Set("Access-Control-Allow-Origin", "*")
         w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-        w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-}</span>
+        w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")</span>
+}
 
 // responsError - utility function
 func responseError(w http.ResponseWriter, msg string, val ...interface{}) []byte <span class="cov8" title="1">{
@@ -208,20 +217,20 @@ func handleResponse(a *schema.AudienceSchema, list string, con connectors.Client
         if a.Message == "success" </span><span class="cov8" title="1">{
                 if contains(a.Data.Segments, list) </span><span class="cov8" title="1">{
                         msg := "engaged : " + list
-                        con.Debug("Function handleResponse "+msg, "")
+                        con.Debug(HANDLERESPONSE+msg+"%s", "")
                         response := &amp;schema.Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: msg}
                         b, _ = json.MarshalIndent(response, "", "        ")
                         return b, true
                 }</span> else<span class="cov8" title="1"> {
                         msg := "engaged : none"
-                        con.Debug("Function handleResponse "+msg, "")
+                        con.Debug(HANDLERESPONSE+msg+"%s", "")
                         response := &amp;schema.Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: msg}
                         b, _ = json.MarshalIndent(response, "", "        ")
                         return b, false
                 }</span>
         }
-        <span class="cov8" title="1">msg := "engaged : not found"
-        con.Debug("Function handleResponse "+msg, "")
+        <span class="cov8" title="1">msg := "engaged : not found %s"
+        con.Debug(HANDLERESPONSE+msg+"%s", "")
         response := &amp;schema.Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: msg}
         b, _ = json.MarshalIndent(response, "", "        ")
         return b, false</span>

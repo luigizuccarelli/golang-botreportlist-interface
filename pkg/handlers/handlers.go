@@ -112,14 +112,14 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clien
 // IsAlive - endpoint call used for openshift readiness and liveliness probes
 func IsAlive(w http.ResponseWriter, r *http.Request) {
 	// add header
-	addHeader(w, r)
+	addHeaders(w, r)
 	fmt.Fprintf(w, "{ \"version\" : \""+os.Getenv("VERSION")+"\" , \"name\": \""+os.Getenv("NAME")+"\" }")
 	return
 }
 
 // headers (with cors) utility
 func addHeaders(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("API-KEY") {
+	if r.Header.Get("API-KEY") != "" {
 		w.Header().Set("API_KEY_PT", r.Header.Get("API_KEY"))
 	}
 	w.Header().Set(CONTENTTYPE, APPLICATIONJSON)
