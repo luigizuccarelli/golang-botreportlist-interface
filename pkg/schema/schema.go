@@ -1,24 +1,20 @@
 package schema
 
+import "time"
+
 // Response schema
 type Response struct {
-	Name       string `json:"name"`
-	StatusCode string `json:"statuscode"`
-	Status     string `json:"status"`
-	Message    string `json:"message"`
+	Code         int              `json:"name"`
+	StatusCode   string           `json:"statuscode"`
+	Status       string           `json:"status"`
+	Message      string           `json:"message"`
+	Payload      []S3FileMetaData `json:"payload"`
+	EmailContent string           `json:"email,omitempty"`
 }
 
-type AudienceSchema struct {
-	Data struct {
-		Segments    []string `json:"segments"`
-		SegmentsAll []string `json:"segments_all"`
-	} `json:"data"`
-	Message string `json:"message"`
-	Meta    struct {
-		ByFields  []string    `json:"by_fields"`
-		Conflicts interface{} `json:"conflicts"`
-		Format    string      `json:"format"`
-		Name      string      `json:"name"`
-	} `json:"meta"`
-	Status int `json:"status"`
+type S3FileMetaData struct {
+	Name         string    `json:"name"`
+	LastModified time.Time `json:"lastmodified"`
+	Size         int64     `json:"size"`
+	StorageClass string    `json:"class"`
 }

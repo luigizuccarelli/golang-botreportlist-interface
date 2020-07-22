@@ -6,15 +6,21 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/microlib/simple"
 )
 
+type FakeS3 struct {
+}
+
 // Mock all connections
 type MockConnectors struct {
-	Http   *http.Client
-	Logger *simple.Logger
-	Flag   string
+	S3Service *FakeS3
+	Http      *http.Client
+	Logger    *simple.Logger
+	Flag      string
 }
 
 // Error - log wrapper
@@ -43,12 +49,47 @@ func (c *MockConnectors) Meta(flag string) string {
 	return flag
 }
 
-// Do - log wrapper
+// Do - log
 func (c *MockConnectors) Do(req *http.Request) (*http.Response, error) {
 	if c.Flag == "true" {
 		return nil, errors.New("forced http error")
 	}
 	return c.Http.Do(req)
+}
+
+// ListObjectsV2 - S3 wrapper
+func (c *MockConnectors) ListObjectsV2(in *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
+	var objs []*s3.Object
+	if c.Flag == "true" {
+		return nil, errors.New("forced s3 ListObjectsV2 error")
+	}
+	name := "test"
+	last := time.Now()
+	size := int64(3232)
+	sc := "TEST"
+	objs = append(objs, &s3.Object{Key: &name, LastModified: &last, Size: &size, StorageClass: &sc})
+	s := &s3.ListObjectsV2Output{Contents: objs}
+	return s, nil
+}
+
+// GetObject - S3 Object download wrapper
+func (c *MockConnectors) GetObject(opts *s3.GetObjectInput) ([]byte, error) {
+	var b []byte
+	if c.Flag == "true" {
+		return b, errors.New("forced s3 ListObjectsV2 error")
+	}
+	b = []byte("this is working!!!")
+	return b, nil
+}
+
+// PutObject - S3 Object uploader wrapper
+func (c *MockConnectors) PutObject(opts *s3.PutObjectInput) (*string, error) {
+	if c.Flag == "true" {
+		s := "error"
+		return &s, errors.New("forced s3 ListObjectsV2 error")
+	}
+	s := "This is working !!!"
+	return &s, nil
 }
 
 // RoundTripFunc .
@@ -87,6 +128,6 @@ func NewTestConnectors(file string, code int, logger *simple.Logger) Clients {
 		}
 	})
 
-	conns := &MockConnectors{Http: httpclient, Logger: logger, Flag: "false"}
+	conns := &MockConnectors{S3Service: &FakeS3{}, Http: httpclient, Logger: logger, Flag: "false"}
 	return conns
 }

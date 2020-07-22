@@ -3,9 +3,9 @@
 # All parameter fields are required for the script to execute
 
 # declare some variables
-PROJECT="servisbot-lytics-interface"
-jobname="kaniko-servisbot-lytics-interface"
-deploymentconfig="servisbot-lytics-interface"
+PROJECT="servisbot-s3bucket-manager"
+jobname="kaniko-servisbot-s3bucket-manager"
+deploymentconfig="servisbot-s3bucket-manager"
 namespace="trackmate-pilot"
 
 
@@ -65,8 +65,12 @@ then
      result=$(cat output.json | jq '.task.status');
      echo "${fs} ${result}";
    done
+   # get the quality gate status
+   curl -H 'Content-Type: application/json' -H 'Accept: application/json' -H 'Authorization: Basic YWRtaW46Yml0bmFtaQ=='  "${SONARQUBE_HOST}/api/qualitygates/project_status?projectKey=${PROJECT}" > result.json;
+
+   result=$(cat result.json | jq '.projectStatus.status');
    # check to see if the job was succesful
-   echo ${result} | grep -o "SUCCESS" && echo "PASSED" && exit 0 || echo "FAILED" && exit 1
+   echo ${result} | grep -o "OK" && echo "PASSED" && exit 0 || echo "FAILED" && exit 1
 fi
 
 if [ "$1" = "build-image" ]

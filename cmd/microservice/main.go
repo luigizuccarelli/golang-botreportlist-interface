@@ -6,9 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-lytics-interface/pkg/connectors"
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-lytics-interface/pkg/handlers"
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-lytics-interface/pkg/validator"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/connectors"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/handlers"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/validator"
 	"github.com/gorilla/mux"
 	"github.com/microlib/simple"
 )
@@ -23,9 +23,17 @@ func startHttpServer(con connectors.Clients) *http.Server {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/api/v1/profile/{email}", func(w http.ResponseWriter, req *http.Request) {
-		handlers.ProfileHandler(w, req, con)
+	r.HandleFunc("/api/v1/s3objects/list/{lastobject}", func(w http.ResponseWriter, req *http.Request) {
+		handlers.ListBucketHandler(w, req, con)
 	}).Methods("GET", "OPTIONS")
+
+	r.HandleFunc("/api/v1/s3objects/{key}", func(w http.ResponseWriter, req *http.Request) {
+		handlers.GetObjectHandler(w, req, con)
+	}).Methods("GET", "OPTIONS")
+
+	r.HandleFunc("/api/v1/s3objects/{key}", func(w http.ResponseWriter, req *http.Request) {
+		handlers.PutObjectHandler(w, req, con)
+	}).Methods("POST", "OPTIONS")
 
 	r.HandleFunc("/api/v2/sys/info/isalive", handlers.IsAlive).Methods("GET")
 

@@ -2,7 +2,7 @@
   "format_version" : 1,
   "label_template": "${COUNT}",
   "enable_pipeline_locking": false,
-  "name": "servisbot-lytics-interface",
+  "name": "servisbot-s3bucket-manager",
   "group" : "ServisBOT",
   "tracking_tool": null,
   "timer": null,
@@ -10,7 +10,7 @@
   "materials": [
     {
       "type": "git",
-      "url": "http://cicd:cicd01@gitea.cicd.svc.cluster.local:3000/cicd/servisbot-lytics-interface.git",
+      "url": "http://cicd:cicd01@gitea.cicd.svc.cluster.local:3000/cicd/servisbot-s3bucket-manager.git",
       "destination": null,
       "filter": null,
       "name": "scm",

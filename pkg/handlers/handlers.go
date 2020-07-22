@@ -1,115 +1,122 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-lytics-interface/pkg/connectors"
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-lytics-interface/pkg/schema"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/connectors"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/schema"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/gorilla/mux"
 )
 
 const (
 	CONTENTTYPE     string = "Content-Type"
 	APPLICATIONJSON string = "application/json"
-	PROFILEHANDLER  string = "ProfileHandler %v"
 	HANDLERESPONSE  string = "Function handleResponse "
-	ACTIVE          string = "smt_active"
-	POWER           string = "smt_power"
 )
 
-// ProfileHandler - handler that calls lytics audience endpoint
-func ProfileHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
-	var audience *schema.AudienceSchema
-	var vars = mux.Vars(r)
+// ListBucketHandler - handler that interfaces with s3 bucket
+func ListBucketHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
+	var in *s3.ListObjectsV2Input
+	var files []schema.S3FileMetaData
+	vars := mux.Vars(r)
 
-	addHeaders(w, r)
+	//sess, err := session.NewSession(&aws.Config{Region: aws.String(os.Getenv("AWS_REGION"))})
 
-	email := vars["email"]
-	token := os.Getenv("TOKEN")
-	if token == "" || email == "" {
-		err := errors.New("input params token/email are empty")
-		con.Error(PROFILEHANDLER, err)
-		b := responseError(w, PROFILEHANDLER, err)
-		fmt.Fprintf(w, string(b))
-		return
+	bucket := os.Getenv("AWS_BUCKET")
+
+	// Get the list of items
+	if vars["lastobject"] != "" {
+		in = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), StartAfter: aws.String(vars["lastobject"])}
+	} else {
+		in = &s3.ListObjectsV2Input{Bucket: aws.String(bucket)}
 	}
 
-	// we first check the smt_power audience
-	res := strings.NewReplacer("{email}", email, "{token}", token, "{audience}", POWER)
-	// Replace all pairs.
-	url := res.Replace(os.Getenv("URL"))
-	body, errs := makeRequest(url, con)
-	if errs != nil {
-		con.Error(PROFILEHANDLER, errs)
-		b := responseError(w, PROFILEHANDLER, errs)
-		fmt.Fprintf(w, string(b))
-		return
+	resp, err := con.ListObjectsV2(in)
+	if err != nil {
+		con.Error("Unable to list items in bucket %q, %v", bucket, err)
 	}
 
-	errs = json.Unmarshal(body, &audience)
-	if errs != nil {
-		msg := "ProfileHandler could not unmarshal profile message data to schema (smt_power) %v"
-		con.Error(msg, errs)
-		b := responseError(w, msg, errs)
-		fmt.Fprintf(w, string(b))
-		return
+	for _, item := range resp.Contents {
+		file := &schema.S3FileMetaData{Name: *item.Key, LastModified: *item.LastModified, Size: *item.Size, StorageClass: *item.StorageClass}
+		files = append(files, *file)
 	}
-
-	// we check if status is 200 - this should always work
-	// if not it means lytics is offline
-	if audience.Status == 200 {
-		// we should usually get success
-		// check in  "highly engaged audience" list
-		data, bFlag := handleResponse(audience, POWER, con)
-		if bFlag {
-			w.WriteHeader(http.StatusOK)
-			fmt.Fprintf(w, string(data))
-			return
-		} else {
-			// check in "currently engaged audience" list
-			data, bFlag = handleResponse(audience, ACTIVE, con)
-			res = strings.NewReplacer("{email}", email, "{token}", token, "{audience}", ACTIVE)
-			// Replace all pairs.
-			url = res.Replace(os.Getenv("URL"))
-			body, errs = makeRequest(url, con)
-			if errs != nil {
-				con.Error(PROFILEHANDLER, errs)
-				b := responseError(w, PROFILEHANDLER, errs)
-				fmt.Fprintf(w, string(b))
-				return
-			}
-
-			errs = json.Unmarshal(body, &audience)
-			if errs != nil {
-				msg := "ProfileHandler could not unmarshal profile message data to schema (smt_active) %v"
-				con.Error(msg, errs)
-				b := responseError(w, msg, errs)
-				fmt.Fprintf(w, string(b))
-				return
-			}
-
-			data, _ := handleResponse(audience, ACTIVE, con)
-			fmt.Fprintf(w, string(data))
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-	}
-
-	msg := PROFILEHANDLER
-	err := errors.New("lytics request error")
-	con.Error(msg, err)
-	b := responseError(w, msg, err)
+	con.Trace("ListBucketHandler found %d items in bucket %s", len(resp.Contents), bucket)
+	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: "ListBucketHandler s3 object call successful", Payload: files}
+	w.WriteHeader(http.StatusOK)
+	b, _ := json.MarshalIndent(response, "", "	")
 	fmt.Fprintf(w, string(b))
 	return
 }
 
-// IsAlive - endpoint call used for openshift readiness and liveliness probes
+// GetObjectHandler - handler that interfaces with s3 bucket
+func GetObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
+	bucket := os.Getenv("AWS_BUCKET")
+	vars := mux.Vars(r)
+
+	filename := vars["key"]
+	opts := &s3.GetObjectInput{Bucket: &bucket, Key: &filename}
+	data, e := con.GetObject(opts)
+	if e != nil {
+		msg := "GetObjectHandler %v"
+		con.Error(msg, e)
+		b := responseError(w, msg, e)
+		fmt.Fprintf(w, string(b))
+		return
+	}
+
+	con.Trace("GetObjectHandler data %s", string(data))
+	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: "ListBucketHandler s3 object call successful", EmailContent: string(data)}
+	w.WriteHeader(http.StatusOK)
+	b, _ := json.MarshalIndent(response, "", "	")
+	fmt.Fprintf(w, string(b))
+	return
+}
+
+// PutObjectHandler - handler that interfaces with s3 bucket
+func PutObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
+	bucket := os.Getenv("AWS_BUCKET")
+	vars := mux.Vars(r)
+
+	filename := vars["key"]
+	if r.Body == nil {
+		r.Body = ioutil.NopCloser(bytes.NewBufferString(""))
+	}
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		msg := "PutObjectHandler %v"
+		con.Error(msg, err)
+		b := responseError(w, msg, err)
+		fmt.Fprintf(w, string(b))
+		return
+	}
+
+	opts := &s3.PutObjectInput{Bucket: &bucket, Key: &filename, Body: aws.ReadSeekCloser(strings.NewReader(string(data)))}
+	res, e := con.PutObject(opts)
+	if e != nil {
+		msg := "PutObjectHandler %v"
+		con.Error(msg, e)
+		b := responseError(w, msg, e)
+		fmt.Fprintf(w, string(b))
+		return
+	}
+
+	con.Trace("PutObjectHandler data %s", res)
+
+	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: "PutObjectHandler s3 object call successful"}
+	w.WriteHeader(http.StatusOK)
+	b, _ := json.MarshalIndent(response, "", "	")
+	fmt.Fprintf(w, string(b))
+	return
+}
+
 func IsAlive(w http.ResponseWriter, r *http.Request) {
 	// add header
 	addHeaders(w, r)
@@ -132,64 +139,8 @@ func addHeaders(w http.ResponseWriter, r *http.Request) {
 // responsError - utility function
 func responseError(w http.ResponseWriter, msg string, val ...interface{}) []byte {
 	var b []byte
-	response := &schema.Response{Name: os.Getenv("NAME"), StatusCode: "500", Status: "ERROR", Message: fmt.Sprintf(msg, val...)}
+	response := &schema.Response{Code: http.StatusInternalServerError, StatusCode: "500", Status: "ERROR", Message: fmt.Sprintf(msg, val...)}
 	w.WriteHeader(http.StatusInternalServerError)
 	b, _ = json.MarshalIndent(response, "", "	")
 	return b
-}
-
-// handleResponse - utility function
-func handleResponse(a *schema.AudienceSchema, list string, con connectors.Clients) ([]byte, bool) {
-	var b []byte
-	// should not be empty
-	if a.Message == "success" {
-		if contains(a.Data.Segments, list) {
-			msg := "engaged : " + list
-			con.Debug(HANDLERESPONSE+msg+"%s", "")
-			response := &schema.Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: msg}
-			b, _ = json.MarshalIndent(response, "", "	")
-			return b, true
-		} else {
-			msg := "engaged : none"
-			con.Debug(HANDLERESPONSE+msg+"%s", "")
-			response := &schema.Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: msg}
-			b, _ = json.MarshalIndent(response, "", "	")
-			return b, false
-		}
-	}
-	msg := "engaged : not found %s"
-	con.Debug(HANDLERESPONSE+msg+"%s", "")
-	response := &schema.Response{Name: os.Getenv("NAME"), StatusCode: "200", Status: "OK", Message: msg}
-	b, _ = json.MarshalIndent(response, "", "	")
-	return b, false
-}
-
-// makeRequest - private utility function
-func makeRequest(url string, con connectors.Clients) ([]byte, error) {
-	var b []byte
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := con.Do(req)
-	if err != nil {
-		con.Error("Function makeRequest http request %v", err)
-		return b, err
-	}
-	defer resp.Body.Close()
-	body, e := ioutil.ReadAll(resp.Body)
-	if e != nil {
-		con.Error("Function makeRequest %v", e)
-		return b, err
-	}
-	con.Debug("Function makeRequest response from middleware %s", string(body))
-	return body, nil
-}
-
-// contains - private function that iterates through the []string
-func contains(arr []string, str string) bool {
-	for _, a := range arr {
-		if a == str {
-			return true
-		}
-	}
-	return false
 }

@@ -1,5 +1,5 @@
-# Trackmate lytics interface
+# ServisBOT S3 bucket interface for emails
 
-Simple endpoint that proxies a call to lytics for data analytics functionality.
+Simple endpoint that lists and gets emails from a specific s3 bucket.
 
 ## Note

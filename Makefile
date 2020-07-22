@@ -17,7 +17,7 @@ clean:
 	go clean ./...
 
 container:
-	podman build -t  tfld-docker-prd-local.repo.14west.io/servisbot-lytics-interface:1.14.2 .
+	podman build -t  tfld-docker-prd-local.repo.14west.io/servisbot-s3bucket-manager:1.14.2 .
 
 push:
-	podman push tfld-docker-prd-local.repo.14west.io/servisbot-lytics-interface:1.14.2 
+	podman push tfld-docker-prd-local.repo.14west.io/servisbot-s3bucket-manager:1.14.2 
