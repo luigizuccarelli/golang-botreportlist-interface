@@ -73,9 +73,9 @@ func ListBucketHandler(w http.ResponseWriter, r *http.Request, con connectors.Cl
 
 	// Get the list of items
 	if vars["lastobject"] != "" && vars["lastobject"] != "false" {
-		in = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), StartAfter: aws.String(vars["lastobject"])}
+		in = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String("Email"), StartAfter: aws.String(vars["lastobject"])}
 	} else {
-		in = &s3.ListObjectsV2Input{Bucket: aws.String(bucket)}
+		in = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String("Email")}
 	}
 
 	resp, err := con.ListObjectsV2(in)
