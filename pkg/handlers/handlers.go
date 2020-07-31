@@ -33,6 +33,7 @@ func ListBucketHandler(w http.ResponseWriter, r *http.Request, con connectors.Cl
 	var servisbotRequest *schema.ServisBOTRequest
 	vars := mux.Vars(r)
 
+	addHeaders(w, r)
 	// read the jwt token data in the body
 	// we don't use authorization header as the token can get quite large due to form data
 	// ensure we don't have nil - it will cause a null pointer exception
@@ -102,6 +103,7 @@ func GetObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Cli
 	bucket := os.Getenv(AWSBUCKET)
 	vars := mux.Vars(r)
 
+	addHeaders(w, r)
 	// read the jwt token data in the body
 	// we don't use authorization header as the token can get quite large due to form data
 	// ensure we don't have nil - it will cause a null pointer exception
@@ -164,6 +166,7 @@ func PutObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Cli
 	bucket := os.Getenv(AWSREPORTBUCKET)
 	vars := mux.Vars(r)
 
+	addHeaders(w, r)
 	// read the jwt token data in the body
 	// we don't use authorization header as the token can get quite large due to form data
 	// ensure we don't have nil - it will cause a null pointer exception

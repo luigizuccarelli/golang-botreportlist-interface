@@ -54,7 +54,7 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/handlers/handlers.go (93.6%)</option>
+				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/handlers/handlers.go (93.7%)</option>
 				
 				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/validator/validate.go (100.0%)</option>
 				
@@ -105,6 +105,7 @@ func ListBucketHandler(w http.ResponseWriter, r *http.Request, con connectors.Cl
         var servisbotRequest *schema.ServisBOTRequest
         vars := mux.Vars(r)
 
+        addHeaders(w, r)
         // read the jwt token data in the body
         // we don't use authorization header as the token can get quite large due to form data
         // ensure we don't have nil - it will cause a null pointer exception
@@ -174,6 +175,7 @@ func GetObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Cli
         bucket := os.Getenv(AWSBUCKET)
         vars := mux.Vars(r)
 
+        addHeaders(w, r)
         // read the jwt token data in the body
         // we don't use authorization header as the token can get quite large due to form data
         // ensure we don't have nil - it will cause a null pointer exception
@@ -236,6 +238,7 @@ func PutObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Cli
         bucket := os.Getenv(AWSREPORTBUCKET)
         vars := mux.Vars(r)
 
+        addHeaders(w, r)
         // read the jwt token data in the body
         // we don't use authorization header as the token can get quite large due to form data
         // ensure we don't have nil - it will cause a null pointer exception
