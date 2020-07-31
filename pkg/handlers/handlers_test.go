@@ -53,7 +53,7 @@ func TestAllHandlers(t *testing.T) {
 
 		requestPayload := `{  "email": "cduffy@tfd.ie", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/list/s3objects/234324", bytes.NewBuffer([]byte(requestPayload)))
+		req, _ := http.NewRequest("POST", "/api/v1/list/reports/234324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -81,7 +81,7 @@ func TestAllHandlers(t *testing.T) {
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/list/s3objects/234324", errReader(0))
+		req, _ := http.NewRequest("POST", "/api/v1/list/reports/234324", errReader(0))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -110,7 +110,7 @@ func TestAllHandlers(t *testing.T) {
 
 		requestPayload := `{  jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/list/s3objects/234324", bytes.NewBuffer([]byte(requestPayload)))
+		req, _ := http.NewRequest("POST", "/api/v1/list/reports/234324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -139,7 +139,7 @@ func TestAllHandlers(t *testing.T) {
 
 		requestPayload := `{ "data":"test", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/list/s3objects/234324", bytes.NewBuffer([]byte(requestPayload)))
+		req, _ := http.NewRequest("POST", "/api/v1/list/reports/234324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -168,7 +168,7 @@ func TestAllHandlers(t *testing.T) {
 
 		requestPayload := `{  "email": "cduffy@tfd.ie", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/api/v1/s3objects/234324", bytes.NewBuffer([]byte(requestPayload)))
+		req, _ := http.NewRequest("POST", "/api/v1/emails/234324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -196,7 +196,7 @@ func TestAllHandlers(t *testing.T) {
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/api/v1/s3objects/4324324324", errReader(0))
+		req, _ := http.NewRequest("POST", "/api/v1/emails/4324324324", errReader(0))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -225,7 +225,7 @@ func TestAllHandlers(t *testing.T) {
 
 		requestPayload := `{  email": "cduffy@tfd.ie", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/api/v1/s3objects/234324", bytes.NewBuffer([]byte(requestPayload)))
+		req, _ := http.NewRequest("POST", "/api/v1/emails/234324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -254,7 +254,7 @@ func TestAllHandlers(t *testing.T) {
 
 		requestPayload := `{  "email": "cduffy@tfd.ie", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/api/v1/s3objects/234324", bytes.NewBuffer([]byte(requestPayload)))
+		req, _ := http.NewRequest("POST", "/api/v1/emails/234324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -283,7 +283,7 @@ func TestAllHandlers(t *testing.T) {
 
 		requestPayload := `{  "email": "cduffy@tfd.ie", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/api/v1/s3objects/234324", bytes.NewBuffer([]byte(requestPayload)))
+		req, _ := http.NewRequest("POST", "/api/v1/emails/234324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -313,7 +313,7 @@ func TestAllHandlers(t *testing.T) {
 
 		requestPayload := `{  "data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/s3objects/4324324324", bytes.NewBuffer([]byte(requestPayload)))
+		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -339,7 +339,7 @@ func TestAllHandlers(t *testing.T) {
 		var STATUS int = 500
 		os.Setenv("TOKEN", "1212121")
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/s3objects/4324324324", errReader(0))
+		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", errReader(0))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -368,7 +368,7 @@ func TestAllHandlers(t *testing.T) {
 
 		requestPayload := `{  data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/s3objects/4324324324", bytes.NewBuffer([]byte(requestPayload)))
+		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -397,7 +397,7 @@ func TestAllHandlers(t *testing.T) {
 
 		requestPayload := `{  "data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/s3objects/4324324324", bytes.NewBuffer([]byte(requestPayload)))
+		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -426,7 +426,7 @@ func TestAllHandlers(t *testing.T) {
 
 		requestPayload := `{  "data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/s3objects/4324324324", bytes.NewBuffer([]byte(requestPayload)))
+		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
