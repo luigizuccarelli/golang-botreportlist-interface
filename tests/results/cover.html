@@ -54,7 +54,7 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/handlers/handlers.go (94.7%)</option>
+				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/handlers/handlers.go (93.6%)</option>
 				
 				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/validator/validate.go (100.0%)</option>
 				
@@ -75,6 +75,7 @@
 import (
         "bytes"
         "encoding/json"
+        "errors"
         "fmt"
         "io/ioutil"
         "net/http"
@@ -85,6 +86,7 @@ import (
         "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/schema"
         "github.com/aws/aws-sdk-go/aws"
         "github.com/aws/aws-sdk-go/service/s3"
+        "github.com/dgrijalva/jwt-go"
         "github.com/gorilla/mux"
 )
 
@@ -92,20 +94,57 @@ const (
         CONTENTTYPE     string = "Content-Type"
         APPLICATIONJSON string = "application/json"
         HANDLERESPONSE  string = "Function handleResponse "
+        AWSBUCKET       string = "AWS_BUCKET"
+        AWSREPORTBUCKET string = "AWS_REPORT_BUCKET"
 )
 
 // ListBucketHandler - handler that interfaces with s3 bucket
 func ListBucketHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) <span class="cov8" title="1">{
         var in *s3.ListObjectsV2Input
         var files []schema.S3FileMetaData
+        var servisbotRequest *schema.ServisBOTRequest
         vars := mux.Vars(r)
 
-        //sess, err := session.NewSession(&amp;aws.Config{Region: aws.String(os.Getenv("AWS_REGION"))})
+        // read the jwt token data in the body
+        // we don't use authorization header as the token can get quite large due to form data
+        // ensure we don't have nil - it will cause a null pointer exception
+        if r.Body == nil </span><span class="cov0" title="0">{
+                r.Body = ioutil.NopCloser(bytes.NewBufferString(""))
+        }</span>
+        <span class="cov8" title="1">body, err := ioutil.ReadAll(r.Body)
+        if err != nil </span><span class="cov8" title="1">{
+                msg := "Body data (JWT) %v"
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
 
-        bucket := os.Getenv("AWS_BUCKET")
+        <span class="cov8" title="1">con.Trace("Request body : %s", string(body))
+
+        // unmarshal result from mw backend
+        errs := json.Unmarshal(body, &amp;servisbotRequest)
+        if errs != nil </span><span class="cov8" title="1">{
+                msg := "GenericHandler could not unmarshal input data from servisBOT to schema %v"
+                con.Error(msg, errs)
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        // check the jwt token
+        <span class="cov8" title="1">_, err = verifyJwtToken(servisbotRequest.JwtToken)
+        if err != nil </span><span class="cov8" title="1">{
+                msg := "ListBucketHandler verifyToken  %v"
+                con.Error(msg, err)
+                b := responseErrorFormat(http.StatusForbidden, w, msg, err)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        <span class="cov8" title="1">bucket := os.Getenv(AWSREPORTBUCKET)
 
         // Get the list of items
-        if vars["lastobject"] != "" </span><span class="cov8" title="1">{
+        if vars["lastobject"] != "" &amp;&amp; vars["lastobject"] != "false" </span><span class="cov8" title="1">{
                 in = &amp;s3.ListObjectsV2Input{Bucket: aws.String(bucket), StartAfter: aws.String(vars["lastobject"])}
         }</span> else<span class="cov0" title="0"> {
                 in = &amp;s3.ListObjectsV2Input{Bucket: aws.String(bucket)}
@@ -130,22 +169,60 @@ func ListBucketHandler(w http.ResponseWriter, r *http.Request, con connectors.Cl
 
 // GetObjectHandler - handler that interfaces with s3 bucket
 func GetObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) <span class="cov8" title="1">{
-        bucket := os.Getenv("AWS_BUCKET")
+        var servisbotRequest *schema.ServisBOTRequest
+
+        bucket := os.Getenv(AWSBUCKET)
         vars := mux.Vars(r)
 
-        filename := vars["key"]
+        // read the jwt token data in the body
+        // we don't use authorization header as the token can get quite large due to form data
+        // ensure we don't have nil - it will cause a null pointer exception
+        if r.Body == nil </span><span class="cov0" title="0">{
+                r.Body = ioutil.NopCloser(bytes.NewBufferString(""))
+        }</span>
+        <span class="cov8" title="1">body, err := ioutil.ReadAll(r.Body)
+        if err != nil </span><span class="cov8" title="1">{
+                msg := "GetObjectHandler body data %v"
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        <span class="cov8" title="1">con.Trace("GetObjectHandler request body : %s", string(body))
+
+        // unmarshal result from mw backend
+        errs := json.Unmarshal(body, &amp;servisbotRequest)
+        if errs != nil </span><span class="cov8" title="1">{
+                msg := "GetObjectHandler could not unmarshal input data from servisBOT to schema %v"
+                con.Error(msg, errs)
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        // check the jwt token
+        <span class="cov8" title="1">_, err = verifyJwtToken(servisbotRequest.JwtToken)
+        if err != nil </span><span class="cov8" title="1">{
+                msg := "GetObjectHandler verifyToken  %v"
+                con.Error(msg, err)
+                b := responseErrorFormat(http.StatusForbidden, w, msg, err)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        <span class="cov8" title="1">filename := vars["key"]
         opts := &amp;s3.GetObjectInput{Bucket: &amp;bucket, Key: &amp;filename}
         data, e := con.GetObject(opts)
         if e != nil </span><span class="cov8" title="1">{
                 msg := "GetObjectHandler %v"
                 con.Error(msg, e)
-                b := responseError(w, msg, e)
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
                 fmt.Fprintf(w, string(b))
                 return
         }</span>
 
         <span class="cov8" title="1">con.Trace("GetObjectHandler data %s", string(data))
-        response := &amp;schema.Response{Code: http.StatusOK, Status: "OK", Message: "ListBucketHandler s3 object call successful", EmailContent: string(data)}
+        response := &amp;schema.Response{Code: http.StatusOK, Status: "OK", Message: "GetObjectHandler s3 object call successful", EmailContent: string(data)}
         w.WriteHeader(http.StatusOK)
         b, _ := json.MarshalIndent(response, "", "        ")
         fmt.Fprintf(w, string(b))
@@ -154,28 +231,54 @@ func GetObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Cli
 
 // PutObjectHandler - handler that interfaces with s3 bucket
 func PutObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) <span class="cov8" title="1">{
-        bucket := os.Getenv("AWS_BUCKET")
+        var servisbotRequest *schema.ServisBOTRequest
+
+        bucket := os.Getenv(AWSREPORTBUCKET)
         vars := mux.Vars(r)
 
-        filename := vars["key"]
+        // read the jwt token data in the body
+        // we don't use authorization header as the token can get quite large due to form data
+        // ensure we don't have nil - it will cause a null pointer exception
         if r.Body == nil </span><span class="cov0" title="0">{
                 r.Body = ioutil.NopCloser(bytes.NewBufferString(""))
         }</span>
-        <span class="cov8" title="1">data, err := ioutil.ReadAll(r.Body)
+        <span class="cov8" title="1">body, err := ioutil.ReadAll(r.Body)
         if err != nil </span><span class="cov8" title="1">{
-                msg := "PutObjectHandler %v"
-                con.Error(msg, err)
-                b := responseError(w, msg, err)
+                msg := "PutObjectHandler body data error : access forbidden %v"
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
                 fmt.Fprintf(w, string(b))
                 return
         }</span>
 
-        <span class="cov8" title="1">opts := &amp;s3.PutObjectInput{Bucket: &amp;bucket, Key: &amp;filename, Body: aws.ReadSeekCloser(strings.NewReader(string(data)))}
+        <span class="cov8" title="1">con.Trace("PutObjectHandler request body : %s", string(body))
+
+        // unmarshal result from mw backend
+        errs := json.Unmarshal(body, &amp;servisbotRequest)
+        if errs != nil </span><span class="cov8" title="1">{
+                msg := "PutObjectHandler could not unmarshal input data from servisBOT to schema %v"
+                con.Error(msg, errs)
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        // check the jwt token
+        <span class="cov8" title="1">_, err = verifyJwtToken(servisbotRequest.JwtToken)
+        if err != nil </span><span class="cov8" title="1">{
+                msg := "PutObjectHandler verifyToken  %v"
+                con.Error(msg, err)
+                b := responseErrorFormat(http.StatusForbidden, w, msg, err)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        <span class="cov8" title="1">filename := vars["key"]
+        opts := &amp;s3.PutObjectInput{Bucket: &amp;bucket, Key: &amp;filename, Body: aws.ReadSeekCloser(strings.NewReader(servisbotRequest.Data))}
         res, e := con.PutObject(opts)
         if e != nil </span><span class="cov8" title="1">{
                 msg := "PutObjectHandler %v"
                 con.Error(msg, e)
-                b := responseError(w, msg, e)
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, e)
                 fmt.Fprintf(w, string(b))
                 return
         }</span>
@@ -190,7 +293,7 @@ func PutObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Cli
 }
 
 func IsAlive(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        // add header
+        // add header (cors) override for vuejs FE
         addHeaders(w, r)
         fmt.Fprintf(w, "{ \"version\" : \""+os.Getenv("VERSION")+"\" , \"name\": \""+os.Getenv("NAME")+"\" }")
         return
@@ -208,14 +311,45 @@ func addHeaders(w http.ResponseWriter, r *http.Request) <span class="cov8" title
         w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")</span>
 }
 
-// responsError - utility function
-func responseError(w http.ResponseWriter, msg string, val ...interface{}) []byte <span class="cov8" title="1">{
+// responsErrorFormat - utility function
+func responseErrorFormat(code int, w http.ResponseWriter, msg string, val ...interface{}) []byte <span class="cov8" title="1">{
         var b []byte
-        response := &amp;schema.Response{Code: http.StatusInternalServerError, StatusCode: "500", Status: "ERROR", Message: fmt.Sprintf(msg, val...)}
-        w.WriteHeader(http.StatusInternalServerError)
+        response := &amp;schema.Response{Code: code, Status: "ERROR", Message: fmt.Sprintf(msg, val...)}
+        w.WriteHeader(code)
         b, _ = json.MarshalIndent(response, "", "        ")
         return b
 }</span>
+
+// verifyJwtToken - private function
+func verifyJwtToken(tokenStr string) (*schema.Credentials, error) <span class="cov8" title="1">{
+        var creds *schema.Credentials
+
+        if tokenStr == "" </span><span class="cov0" title="0">{
+                return creds, errors.New("jwt token is invalid/empty")
+        }</span>
+        // local function
+        <span class="cov8" title="1">token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) </span><span class="cov8" title="1">{
+                if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+                }</span>
+                <span class="cov8" title="1">return []byte(os.Getenv("JWT_SECRETKEY")), nil</span>
+        })
+
+        <span class="cov8" title="1">if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">if claims, ok := token.Claims.(jwt.MapClaims); ok &amp;&amp; token.Valid </span><span class="cov8" title="1">{
+                if claims["user"] == nil || claims["customerNumber"] == nil </span><span class="cov0" title="0">{
+                        return creds, errors.New("JWT invalid user/customerNumber empty")
+                }</span>
+                <span class="cov8" title="1">user := claims["user"].(string)
+                cn := claims["customerNumber"].(string)
+                creds = &amp;schema.Credentials{User: user, Password: "", CustomerNumber: cn}
+                return creds, nil</span>
+        }
+        <span class="cov0" title="0">return creds, errors.New("jwt token is invalid")</span>
+}
 </pre>
 		
 		<pre class="file" id="file1" style="display: none">package validator

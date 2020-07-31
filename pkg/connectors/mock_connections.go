@@ -68,6 +68,12 @@ func (c *MockConnectors) ListObjectsV2(in *s3.ListObjectsV2Input) (*s3.ListObjec
 	size := int64(3232)
 	sc := "TEST"
 	objs = append(objs, &s3.Object{Key: &name, LastModified: &last, Size: &size, StorageClass: &sc})
+
+	newname := "nextest"
+	newlast := time.Now()
+	newsize := int64(6464)
+	newsc := "NEXTTEST"
+	objs = append(objs, &s3.Object{Key: &newname, LastModified: &newlast, Size: &newsize, StorageClass: &newsc})
 	s := &s3.ListObjectsV2Output{Contents: objs}
 	return s, nil
 }
@@ -78,7 +84,7 @@ func (c *MockConnectors) GetObject(opts *s3.GetObjectInput) ([]byte, error) {
 	if c.Flag == "true" {
 		return b, errors.New("forced s3 ListObjectsV2 error")
 	}
-	b = []byte("this is working!!!")
+	b = []byte("GetObject -> this is working!!!")
 	return b, nil
 }
 
@@ -88,7 +94,7 @@ func (c *MockConnectors) PutObject(opts *s3.PutObjectInput) (*string, error) {
 		s := "error"
 		return &s, errors.New("forced s3 ListObjectsV2 error")
 	}
-	s := "This is working !!!"
+	s := "PutObject This is working !!!"
 	return &s, nil
 }
 

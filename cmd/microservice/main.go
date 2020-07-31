@@ -23,7 +23,7 @@ func startHttpServer(con connectors.Clients) *http.Server {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/api/v1/s3objects/list/{lastobject}", func(w http.ResponseWriter, req *http.Request) {
+	r.HandleFunc("/api/v1/list/s3objects/{lastobject}", func(w http.ResponseWriter, req *http.Request) {
 		handlers.ListBucketHandler(w, req, con)
 	}).Methods("GET", "OPTIONS")
 
