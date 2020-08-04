@@ -4,12 +4,13 @@ import "time"
 
 // Response schema
 type Response struct {
-	Code         int              `json:"name"`
-	StatusCode   string           `json:"statuscode"`
-	Status       string           `json:"status"`
-	Message      string           `json:"message"`
-	Payload      []S3FileMetaData `json:"payload"`
-	EmailContent string           `json:"email,omitempty"`
+	Code       int              `json:"name"`
+	StatusCode string           `json:"statuscode"`
+	Status     string           `json:"status"`
+	Message    string           `json:"message"`
+	Payload    []S3FileMetaData `json:"payload,omitempty"`
+	Email      string           `json:"email,omitempty"`
+	Report     *ReportContent   `json:"report,omitempty"`
 }
 
 // GenericSchema - used in the GenericHandler (complex data object)
@@ -54,4 +55,19 @@ type S3FileMetaData struct {
 	LastModified time.Time `json:"lastmodified"`
 	Size         int64     `json:"size"`
 	StorageClass string    `json:"class"`
+}
+
+type ReportContent struct {
+	Channel             string      `json:"Channel"`
+	Affiliate           string      `json:"Affiliate"`
+	MessageID           string      `json:"MessageId"`
+	EmailBody           string      `json:"EmailBody"`
+	EmailSubject        string      `json:"EmailSubject"`
+	EmailS3Key          string      `json:"EmailS3Key"`
+	Timestamp           int64       `json:"Timestamp"`
+	Endpoint            interface{} `json:"Endpoint"`
+	BotProcessingMode   string      `json:"BotProcessingMode"`
+	ProcessOutcome      string      `json:"ProcessOutcome"`
+	Entities            []string    `json:"Entities"`
+	EmailClassification []string    `json:"EmailClassification"`
 }

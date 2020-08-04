@@ -13,6 +13,8 @@ type Clients interface {
 	Debug(string, ...interface{})
 	Trace(string, ...interface{})
 	Meta(string) string
+	SetMode(string)
+	GetMode() string
 	Do(req *http.Request) (*http.Response, error)
 	ListObjectsV2(in *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error)
 	GetObject(in *s3.GetObjectInput) ([]byte, error)

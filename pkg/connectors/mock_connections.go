@@ -21,6 +21,7 @@ type MockConnectors struct {
 	Http      *http.Client
 	Logger    *simple.Logger
 	Flag      string
+	Mode      string
 }
 
 // Error - log wrapper
@@ -47,6 +48,16 @@ func (c *MockConnectors) Trace(msg string, val ...interface{}) {
 func (c *MockConnectors) Meta(flag string) string {
 	c.Flag = flag
 	return flag
+}
+
+// SetMode - simple push pull flag setting
+func (c *MockConnectors) SetMode(mode string) {
+	c.Mode = mode
+}
+
+// GetMode - simple flag check routine
+func (c *MockConnectors) GetMode() string {
+	return c.Mode
 }
 
 // Do - log

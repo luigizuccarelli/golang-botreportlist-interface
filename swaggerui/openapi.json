@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "description": "OpenAPI standard for ServisBOT Interface",
-    "title": "servisbot-middleware-interface",
+    "title": "servisbot-s3ucket-manager",
     "version": "1.0.1",
     "contact": {
       "name": "API Support",
@@ -45,42 +45,24 @@
         }
       }
     },
-    "/api/v1/{affiliateid}/profile/{email}": {
-      "get": {
-        "summary": "Api call that gets the profile data for a customer by email",
-        "operationId": "mwgetprofile",
+    "/validateservice/api/v1/list/reports/{lastobject}": {
+      "post": {
+        "summary": "Api call that lists 1000 objects from an aws s3 bucket",
+        "operationId": "listreports",
         "parameters": [
-          {
-            "name": "affiliateid",
-            "in": "path",
-            "description": "affiliate id",
+           {
+            "in": "body",
+            "name": "body",
+            "description": "Required payload to get a list of objects from ServisBOT report bucket",
             "required": true,
             "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "email",
-            "in": "path",
-            "description": "email",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "auth",
-            "in": "header",
-            "description": "authorization header using 'Authorization: Bearer token'",
-            "required": true,
-            "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/ServisBOTRequest"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Get profile data by email",
+            "description": "Get list of objects",
             "content": {
               "application/json": {
                 "schema": {
@@ -117,11 +99,11 @@
           }
         }
       }
-    },
+    }
   },
   "servers": [
     {
-      "url": "https://servisbot-service-servisbot-interface.apps.aws2-dev.ocp.14west.io/",
+      "url": "https://nginx-service-servisbot-interface.apps.aws2-dev.ocp.14west.io/",
       "variables": {
         "port": {
           "default": "443"
@@ -135,359 +117,29 @@
   ],
   "components": {
     "schemas": {
-      "SchemaInterface": {
+      "ServisBOTRequest": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "object",
-            "format": "int64"
-          },
-          "lastupdate": {
-            "type": "number",
-            "format": "int64"
-          },
-          "metainfo": {
+          "jwt": {
             "type": "string"
-          },
-          "accounts": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "authStatus": {
-                  "type": "string"
-                },
-                "customerNumber": {
-                  "type": "string"
-                },
-                "cviNbr": {
-                  "type": "string"
-                },
-                "denyAccess": {
-                  "type": "string"
-                },
-                "id": {
-                  "required": [
-                    "authType",
-                    "portalCode",
-                    "userName"
-                  ],
-                  "properties": {
-                    "authType": {
-                      "type": "string"
-                    },
-                    "portalCode": {
-                      "required": [
-                        "authGroup"
-                      ],
-                      "properties": {
-                        "authGroup": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "userName": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "password": {
-                  "type": "string"
-                },
-                "role": {
-                  "type": "string"
-                },
-                "temp": {
-                  "type": "boolean"
-                }
-              }
-            }
-          },
-          "emailAddresses": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "emailAddress": {
-                  "type": "string"
-                },
-                "temp": {
-                  "type": "boolean"
-                }
-              }
-            }
-          },
-          "postalAddresses": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "birthDate": {
-                  "type": "string"
-                },
-                "city": {
-                  "type": "string"
-                },
-                "companyName": {
-                  "type": "string"
-                },
-                "countryCode": {
-                  "type": "string"
-                },
-                "county": {
-                  "type": "string"
-                },
-                "departmentName": {
-                  "type": "string"
-                },
-                "emailAddress": {
-                  "required": [
-                    "emailAddress",
-                    "temp"
-                  ],
-                  "properties": {
-                    "emailAddress": {
-                      "type": "string"
-                    },
-                    "temp": {
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
-                },
-                "faxNumber": {
-                  "type": "string"
-                },
-                "firstName": {
-                  "type": "string"
-                },
-                "id": {
-                  "required": [
-                    "addressCode",
-                    "addressFlag",
-                    "customerNumber"
-                  ],
-                  "properties": {
-                    "addressCode": {
-                      "type": "string"
-                    },
-                    "addressFlag": {
-                      "type": "string"
-                    },
-                    "customerNumber": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "lastName": {
-                  "type": "string"
-                },
-                "middleInitial": {
-                  "type": "string"
-                },
-                "phoneNumber": {
-                  "type": "string"
-                },
-                "phoneNumber2": {
-                  "type": "string"
-                },
-                "phoneNumber3": {
-                  "type": "string"
-                },
-                "postalCode": {
-                  "type": "string"
-                },
-                "state": {
-                  "type": "string"
-                },
-                "street": {
-                  "type": "string"
-                },
-                "street2": {
-                  "type": "string"
-                },
-                "street3": {
-                  "type": "string"
-                },
-                "suffix": {
-                  "type": "string"
-                },
-                "temp": {
-                  "type": "boolean"
-                },
-                "title": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "subscriptionsAndOrders": {
-            "required": [
-              "accessMaintenanceOrders",
-              "productOrders",
-              "subscriptions"
-            ],
-            "properties": {
-              "accessMaintenanceOrders": {
-                "type": "array",
-                "items": {
-                  "type": "object"
-                }
-              },
-              "productOrders": {
-                "type": "array",
-                "items": {
-                  "type": "object"
-                }
-              },
-              "subscriptions": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "circStatus": {
-                      "type": "string"
-                    },
-                    "deliveryCode": {
-                      "type": "string"
-                    },
-                    "expirationDate": {
-                      "type": "string"
-                    },
-                    "finalExpirationDate": {
-                      "type": "string"
-                    },
-                    "graceFlag": {
-                      "type": "string"
-                    },
-                    "graceIssues": {
-                      "type": "number"
-                    },
-                    "id": {
-                      "required": [
-                        "customerNumber",
-                        "item",
-                        "subRef"
-                      ],
-                      "properties": {
-                        "customerNumber": {
-                          "type": "string"
-                        },
-                        "item": {
-                          "required": [
-                            "format",
-                            "itemDemographic1",
-                            "itemDescription",
-                            "itemNumber",
-                            "itemType",
-                            "owningOrg",
-                            "packageFlag",
-                            "productFamily",
-                            "saleableFlag",
-                            "salesTaxProductCode",
-                            "serviceCode",
-                            "taxCommodityCode"
-                          ],
-                          "properties": {
-                            "format": {
-                              "type": "string"
-                            },
-                            "itemDemographic1": {
-                              "type": "string"
-                            },
-                            "itemDescription": {
-                              "type": "string"
-                            },
-                            "itemNumber": {
-                              "type": "string"
-                            },
-                            "itemType": {
-                              "type": "string"
-                            },
-                            "owningOrg": {
-                              "type": "string"
-                            },
-                            "packageFlag": {
-                              "type": "string"
-                            },
-                            "productFamily": {
-                              "type": "string"
-                            },
-                            "saleableFlag": {
-                              "type": "string"
-                            },
-                            "salesTaxProductCode": {
-                              "type": "string"
-                            },
-                            "serviceCode": {
-                              "type": "string"
-                            },
-                            "taxCommodityCode": {
-                              "type": "string"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "subRef": {
-                          "type": "string"
-                        } 
-                      },
-                      "type": "object"
-                    },
-                    "issuesRemaining": {
-                      "type": "number"
-                    },
-                    "lastIssue": {
-                      "type": "string"
-                    },
-                    "memberCat": {
-                      "type": "string"
-                    },
-                    "memberOrg": {
-                      "type": "string"
-                    },
-                    "originalControlGroupDate": {
-                      "type": "string"
-                    },
-                    "promoCode": {
-                      "type": "string"
-                    },
-                    "promotionChoice": {
-                      "type": "string"
-                    },
-                    "purchaseOrderNumber": {
-                      "type": "string"
-                    },
-                    "rate": {
-                     "type": "number"
-                    },
-                    "remainingLiability": {
-                      "type": "number"
-                    },
-                    "renewMethod": {
-                      "type": "string"
-                    },
-                    "startDate": {
-                      "type": "string"
-                    },
-                    "subType": {
-                      "type": "string"
-                    },
-                    "temp": {
-                      "type": "boolean"
-                    },
-                    "term": {
-                      "type": "number"
-                    },
-                    "termNumber": {
-                      "type": "number"
-                    }
-                  }
-                }
-              }
+          }
+        }
+      },
+      "S3Object": {
+        "type": "array",
+        "items": {
+          "properties" :{
+            "name": {
+              "type":"string"
+            },
+            "lastmodified": {
+              "type": "string"
+            },
+            "size": {
+              "type": "number"
+            },
+            "class": {
+              "type": "string"
             }
           }
         }
@@ -509,7 +161,7 @@
             "type": "string"
           },
           "payload": {
-            "$ref": "#/components/schemas/SchemaInterface"
+            "$ref": "#/components/schemas/S3Object"
           }
         }
       }

@@ -161,7 +161,7 @@ func TestAllHandlers(t *testing.T) {
 		}
 	})
 
-	t.Run("GetObjectHandler : should pass", func(t *testing.T) {
+	t.Run("EmailObjectHandler : should pass", func(t *testing.T) {
 		var STATUS int = 200
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
@@ -176,7 +176,7 @@ func TestAllHandlers(t *testing.T) {
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			GetObjectHandler(w, r, conn)
+			EmailObjectHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -186,11 +186,11 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "GetObjectHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "EmailObjectHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("GetObjectHandler : should fail (force error)", func(t *testing.T) {
+	t.Run("EmailObjectHandler : should fail (force error)", func(t *testing.T) {
 		var STATUS int = 500
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
@@ -204,7 +204,7 @@ func TestAllHandlers(t *testing.T) {
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			GetObjectHandler(w, r, conn)
+			EmailObjectHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -214,11 +214,11 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "GetObjectHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "EmailObjectHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("GetObjectHandler : should fail (json)", func(t *testing.T) {
+	t.Run("EmailObjectHandler : should fail (json)", func(t *testing.T) {
 		var STATUS int = 500
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
@@ -233,7 +233,7 @@ func TestAllHandlers(t *testing.T) {
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			GetObjectHandler(w, r, conn)
+			EmailObjectHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -243,11 +243,11 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "GetObjectHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "EmailObjectHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("GetObjectHandler : should fail (JWT)", func(t *testing.T) {
+	t.Run("EmailObjectHandler : should fail (JWT)", func(t *testing.T) {
 		var STATUS int = 403
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr")
@@ -262,7 +262,7 @@ func TestAllHandlers(t *testing.T) {
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			GetObjectHandler(w, r, conn)
+			EmailObjectHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -272,11 +272,11 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "GetObjectHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "EmailObjectHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("GetObjectHandler : should fail (force GetObject error)", func(t *testing.T) {
+	t.Run("EmailObjectHandler : should fail (force GetObject error)", func(t *testing.T) {
 		var STATUS int = 500
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
@@ -292,7 +292,7 @@ func TestAllHandlers(t *testing.T) {
 		conn.Meta("true")
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			GetObjectHandler(w, r, conn)
+			EmailObjectHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -302,11 +302,11 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "GetObjectHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "EmailObjectHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("PutObjectHandler : should pass", func(t *testing.T) {
+	t.Run("ReportObjectHandler : should pass (push)", func(t *testing.T) {
 		var STATUS int = 200
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
@@ -315,13 +315,14 @@ func TestAllHandlers(t *testing.T) {
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		conn.SetMode("push")
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
 			"key": "test",
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			PutObjectHandler(w, r, conn)
+			ReportObjectHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -331,23 +332,54 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "PutObjectHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportObjectHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("PutObjectHandler : should fail (force error readall)", func(t *testing.T) {
+	t.Run("ReportObjectHandler : should pass (pull)", func(t *testing.T) {
+		var STATUS int = 200
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
+
+		requestPayload := `{  "data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		conn.SetMode("pull")
+		//Hack to try to fake gorilla/mux vars
+		vars := map[string]string{
+			"key": "test",
+		}
+		req = mux.SetURLVars(req, vars)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ReportObjectHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportObjectHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("ReportObjectHandler : should fail (force error readall)", func(t *testing.T) {
 		var STATUS int = 500
 		os.Setenv("TOKEN", "1212121")
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", errReader(0))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		conn.SetMode("push")
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
 			"key": "test",
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			PutObjectHandler(w, r, conn)
+			ReportObjectHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -357,11 +389,11 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "PutObjectHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportObjectHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("PutObjectHandler : should fail (json data)", func(t *testing.T) {
+	t.Run("ReportObjectHandler : should fail (json data)", func(t *testing.T) {
 		var STATUS int = 500
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
@@ -370,13 +402,14 @@ func TestAllHandlers(t *testing.T) {
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		conn.SetMode("push")
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
 			"key": "test",
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			PutObjectHandler(w, r, conn)
+			ReportObjectHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -386,11 +419,11 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "PutObjectHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportObjectHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("PutObjectHandler : should fail (JWT)", func(t *testing.T) {
+	t.Run("ReportObjectHandler : should fail (JWT)", func(t *testing.T) {
 		var STATUS int = 403
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr")
@@ -399,13 +432,14 @@ func TestAllHandlers(t *testing.T) {
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		conn.SetMode("push")
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
 			"key": "test",
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			PutObjectHandler(w, r, conn)
+			ReportObjectHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -415,11 +449,11 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "PutObjectHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportObjectHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("PutObjectHandler : should fail (force PutObject error)", func(t *testing.T) {
+	t.Run("ReportObjectHandler : should fail (force ReportObject error)", func(t *testing.T) {
 		var STATUS int = 500
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
@@ -428,6 +462,7 @@ func TestAllHandlers(t *testing.T) {
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		conn.SetMode("push")
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
 			"key": "test",
@@ -435,7 +470,7 @@ func TestAllHandlers(t *testing.T) {
 		conn.Meta("true")
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			PutObjectHandler(w, r, conn)
+			ReportObjectHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -445,7 +480,7 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "PutObjectHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportObjectHandler", rr.Code, STATUS))
 		}
 	})
 

@@ -96,8 +96,8 @@ func ListBucketHandler(w http.ResponseWriter, r *http.Request, con connectors.Cl
 	return
 }
 
-// GetObjectHandler - handler that interfaces with s3 bucket
-func GetObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
+// EmailObjectHandler - handler that interfaces with s3 bucket
+func EmailObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
 	var servisbotRequest *schema.ServisBOTRequest
 
 	bucket := os.Getenv(AWSBUCKET)
@@ -112,18 +112,18 @@ func GetObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Cli
 	}
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		msg := "GetObjectHandler body data %v"
+		msg := "EmailObjectHandler body data %v"
 		b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
 		fmt.Fprintf(w, string(b))
 		return
 	}
 
-	con.Trace("GetObjectHandler request body : %s", string(body))
+	con.Trace("EmailObjectHandler request body : %s", string(body))
 
 	// unmarshal result from mw backend
 	errs := json.Unmarshal(body, &servisbotRequest)
 	if errs != nil {
-		msg := "GetObjectHandler could not unmarshal input data from servisBOT to schema %v"
+		msg := "EmailObjectHandler could not unmarshal input data from servisBOT to schema %v"
 		con.Error(msg, errs)
 		b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
 		fmt.Fprintf(w, string(b))
@@ -133,7 +133,7 @@ func GetObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Cli
 	// check the jwt token
 	_, err = verifyJwtToken(servisbotRequest.JwtToken)
 	if err != nil {
-		msg := "GetObjectHandler verifyToken  %v"
+		msg := "EmailObjectHandler verifyToken  %v"
 		con.Error(msg, err)
 		b := responseErrorFormat(http.StatusForbidden, w, msg, err)
 		fmt.Fprintf(w, string(b))
@@ -144,29 +144,32 @@ func GetObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Cli
 	opts := &s3.GetObjectInput{Bucket: &bucket, Key: &filename}
 	data, e := con.GetObject(opts)
 	if e != nil {
-		msg := "GetObjectHandler %v"
+		msg := "EmailObjectHandler %v"
 		con.Error(msg, e)
 		b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
 		fmt.Fprintf(w, string(b))
 		return
 	}
 
-	con.Trace("GetObjectHandler data %s", string(data))
-	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: "GetObjectHandler s3 object call successful", EmailContent: string(data)}
+	con.Trace("EmailObjectHandler data %s", string(data))
+	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: "EmailObjectHandler s3 object call successful", Email: string(data)}
 	w.WriteHeader(http.StatusOK)
 	b, _ := json.MarshalIndent(response, "", "	")
 	fmt.Fprintf(w, string(b))
 	return
 }
 
-// PutObjectHandler - handler that interfaces with s3 bucket
-func PutObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
+// ReportObjectHandler - handler that interfaces with s3 bucket
+func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
 	var servisbotRequest *schema.ServisBOTRequest
+	var response *schema.Response
+	var report *schema.ReportContent
 
 	bucket := os.Getenv(AWSREPORTBUCKET)
 	vars := mux.Vars(r)
 
 	addHeaders(w, r)
+
 	// read the jwt token data in the body
 	// we don't use authorization header as the token can get quite large due to form data
 	// ensure we don't have nil - it will cause a null pointer exception
@@ -175,18 +178,18 @@ func PutObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Cli
 	}
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		msg := "PutObjectHandler body data error : access forbidden %v"
+		msg := "ReportObjectHandler body data error : access forbidden %v"
 		b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
 		fmt.Fprintf(w, string(b))
 		return
 	}
 
-	con.Trace("PutObjectHandler request body : %s", string(body))
+	con.Trace("ReportObjectHandler request body : %s", string(body))
 
 	// unmarshal result from mw backend
 	errs := json.Unmarshal(body, &servisbotRequest)
 	if errs != nil {
-		msg := "PutObjectHandler could not unmarshal input data from servisBOT to schema %v"
+		msg := "ReportObjectHandler could not unmarshal input data from servisBOT to schema %v"
 		con.Error(msg, errs)
 		b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
 		fmt.Fprintf(w, string(b))
@@ -196,27 +199,44 @@ func PutObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Cli
 	// check the jwt token
 	_, err = verifyJwtToken(servisbotRequest.JwtToken)
 	if err != nil {
-		msg := "PutObjectHandler verifyToken  %v"
+		msg := "ReportObjectHandler verifyToken  %v"
 		con.Error(msg, err)
 		b := responseErrorFormat(http.StatusForbidden, w, msg, err)
 		fmt.Fprintf(w, string(b))
 		return
 	}
 
+	// check for request method
 	filename := vars["key"]
-	opts := &s3.PutObjectInput{Bucket: &bucket, Key: &filename, Body: aws.ReadSeekCloser(strings.NewReader(servisbotRequest.Data))}
-	res, e := con.PutObject(opts)
-	if e != nil {
-		msg := "PutObjectHandler %v"
-		con.Error(msg, e)
-		b := responseErrorFormat(http.StatusInternalServerError, w, msg, e)
-		fmt.Fprintf(w, string(b))
-		return
+	if con.GetMode() == "pull" {
+		opts := &s3.GetObjectInput{Bucket: &bucket, Key: &filename}
+		res, er := con.GetObject(opts)
+		if er != nil {
+			msg := "ReportObjectHandler %v"
+			con.Error(msg, er)
+			b := responseErrorFormat(http.StatusInternalServerError, w, msg, er)
+			fmt.Fprintf(w, string(b))
+			return
+		}
+		// unmarshal result from mw backend
+		json.Unmarshal(res, &report)
+		con.Trace("ReportObjectHandler (get) data %s", res)
+		response = &schema.Response{Code: http.StatusOK, Status: "OK", Message: "ReportObjectHandler s3 object call (get) successful", Report: report}
+	} else {
+		// This is s POST
+		opts := &s3.PutObjectInput{Bucket: &bucket, Key: &filename, Body: aws.ReadSeekCloser(strings.NewReader(servisbotRequest.Data))}
+		res, e := con.PutObject(opts)
+		if e != nil {
+			msg := "ReportObjectHandler %v"
+			con.Error(msg, e)
+			b := responseErrorFormat(http.StatusInternalServerError, w, msg, e)
+			fmt.Fprintf(w, string(b))
+			return
+		}
+		con.Trace("ReportObjectHandler (post) data %s", res)
+		response = &schema.Response{Code: http.StatusOK, Status: "OK", Message: "ReportObjectHandler s3 object call (post) successful"}
 	}
 
-	con.Trace("PutObjectHandler data %s", res)
-
-	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: "PutObjectHandler s3 object call successful"}
 	w.WriteHeader(http.StatusOK)
 	b, _ := json.MarshalIndent(response, "", "	")
 	fmt.Fprintf(w, string(b))

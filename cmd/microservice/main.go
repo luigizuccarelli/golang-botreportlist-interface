@@ -28,11 +28,17 @@ func startHttpServer(con connectors.Clients) *http.Server {
 	}).Methods("POST", "OPTIONS")
 
 	r.HandleFunc("/api/v1/emails/{key}", func(w http.ResponseWriter, req *http.Request) {
-		handlers.GetObjectHandler(w, req, con)
+		handlers.EmailObjectHandler(w, req, con)
 	}).Methods("POST", "OPTIONS")
 
-	r.HandleFunc("/api/v1/reports/{key}", func(w http.ResponseWriter, req *http.Request) {
-		handlers.PutObjectHandler(w, req, con)
+	r.HandleFunc("/api/v1/push/reports/{key}", func(w http.ResponseWriter, req *http.Request) {
+		con.SetMode("push")
+		handlers.ReportObjectHandler(w, req, con)
+	}).Methods("POST", "OPTIONS")
+
+	r.HandleFunc("/api/v1/pull/reports/{key}", func(w http.ResponseWriter, req *http.Request) {
+		con.SetMode("pull")
+		handlers.ReportObjectHandler(w, req, con)
 	}).Methods("POST", "OPTIONS")
 
 	r.HandleFunc("/api/v2/sys/info/isalive", handlers.IsAlive).Methods("GET")

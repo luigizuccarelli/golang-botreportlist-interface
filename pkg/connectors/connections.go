@@ -18,6 +18,7 @@ type Connectors struct {
 	S3Session *session.Session
 	Http      *http.Client
 	Logger    *simple.Logger
+	Mode      string
 }
 
 // NewClientConnections - fucntion that creates all client connections and returns the interface
@@ -66,6 +67,16 @@ func (c *Connectors) Meta(info string) string {
 // Do - http wrapper
 func (c *Connectors) Do(req *http.Request) (*http.Response, error) {
 	return c.Http.Do(req)
+}
+
+// SetMode - simple push pull flag setting
+func (c *Connectors) SetMode(mode string) {
+	c.Mode = mode
+}
+
+// GetMode - simple flag check routine
+func (c *Connectors) GetMode() string {
+	return c.Mode
 }
 
 // ListObjectsV2 - wrapper for the s3 list service
