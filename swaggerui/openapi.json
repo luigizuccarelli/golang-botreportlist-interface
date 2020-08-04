@@ -50,7 +50,16 @@
         "summary": "Api call that lists 1000 objects from an aws s3 bucket",
         "operationId": "listreports",
         "parameters": [
-           {
+          {
+            "name": "lastobject",
+            "in": "path",
+            "description": "lastobject (1000th item) - default false",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "body",
             "name": "body",
             "description": "Required payload to get a list of objects from ServisBOT report bucket",
@@ -76,10 +85,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "items": {
-                    "$ref": "#/components/schemas/Response"
-                  }
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -89,10 +95,181 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "items": {
-                    "$ref": "#/components/schemas/Response"
-                  }
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/validateservice/api/v1/emails/{key}": {
+      "post": {
+        "summary": "Api call that gets the originating email",
+        "operationId": "getoriginalemail",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "name or key of the s3 object (found in the list output)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Required payload to get the originating email (sent to ServisBOT)",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ServisBOTRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get the originating email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/validateservice/api/v1/pull/reports/{key}": {
+      "post": {
+        "summary": "Api call that gets the ServisBOT report object from an aws s3 bucket",
+        "operationId": "getreportobject",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "name or key of the s3 object (found in the list output)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Required payload to get the ServisBOT report object",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ServisBOTRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get the report object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/validateservice/api/v1/push/reports/{key}": {
+      "post": {
+        "summary": "Api call that updates the ServisBOT report object in an aws s3 bucket",
+        "operationId": "postreportobject",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "name or key of the s3 object (found in the list output)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Required payload to get the ServisBOT report object",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/S3ReportObject"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get the report object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleResponse"
                 }
               }
             }
@@ -100,6 +277,7 @@
         }
       }
     }
+
   },
   "servers": [
     {
@@ -144,6 +322,77 @@
           }
         }
       },
+      "S3ReportObject": {
+        "type": "array",
+        "items": {
+          "properties" : {
+            "jwt": {
+              "type": "string"
+            },
+            "channel": {
+              "type":"string"
+            },
+            "affiliate": {
+              "type": "string"
+            },
+            "messageId": {
+              "type": "number"
+            },
+            "emailBody": {
+              "type": "string"
+            },
+            "emailSubject": {
+              "type": "string"
+            },
+            "emailS3Key": {
+              "type": "string"
+            },
+            "timestamp": {
+              "type": "number"
+            },
+            "endpoint": {
+              "type": "string"
+            },
+            "botProcessingMode": {
+              "type": "string"
+            },
+            "processOutcome": {
+              "type": "string"
+            },
+            "entities": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "emailClassification": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "SimpleResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "number",
+            "format": "int64"
+          },
+          "statuscode": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+
       "Response": {
         "type": "object",
         "properties": {
@@ -162,6 +411,48 @@
           },
           "payload": {
             "$ref": "#/components/schemas/S3Object"
+          }
+        }
+      },
+      "EmailResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "number",
+            "format": "int64"
+          },
+          "statuscode": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "ReportResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "number",
+            "format": "int64"
+          },
+          "statuscode": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "report": {
+            "$ref": "#/components/schemas/S3ReportObject"
           }
         }
       }
