@@ -43,8 +43,8 @@ func startHttpServer(con connectors.Clients) *http.Server {
 
 	r.HandleFunc("/api/v2/sys/info/isalive", handlers.IsAlive).Methods("GET")
 
-	//sh := http.StripPrefix("/api/v2/api-docs/", http.FileServer(http.Dir("./swaggerui/")))
-	//r.PathPrefix("/api/v2/api-docs/").Handler(sh)
+	sh := http.StripPrefix("/api/v2/api-docs/", http.FileServer(http.Dir("./swaggerui/")))
+	r.PathPrefix("/api/v2/api-docs/").Handler(sh)
 
 	http.Handle("/", r)
 
