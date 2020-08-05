@@ -96,6 +96,7 @@ const (
         HANDLERESPONSE  string = "Function handleResponse "
         AWSBUCKET       string = "AWS_BUCKET"
         AWSREPORTBUCKET string = "AWS_REPORT_BUCKET"
+        CHANNEL         string = "Email/"
 )
 
 // ListBucketHandler - handler that interfaces with s3 bucket
@@ -279,7 +280,7 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
         }</span>
 
         // check for request method
-        <span class="cov8" title="1">filename := vars["key"]
+        <span class="cov8" title="1">filename := CHANNEL + vars["key"]
         if con.GetMode() == "pull" </span><span class="cov8" title="1">{
                 opts := &amp;s3.GetObjectInput{Bucket: &amp;bucket, Key: &amp;filename}
                 res, er := con.GetObject(opts)
