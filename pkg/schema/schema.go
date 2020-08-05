@@ -4,13 +4,12 @@ import "time"
 
 // Response schema
 type Response struct {
-	Code       int              `json:"name"`
-	StatusCode string           `json:"statuscode"`
-	Status     string           `json:"status"`
-	Message    string           `json:"message"`
-	Payload    []S3FileMetaData `json:"payload,omitempty"`
-	Email      string           `json:"email,omitempty"`
-	Report     *ReportContent   `json:"report,omitempty"`
+	Code    int              `json:"code"`
+	Status  string           `json:"status"`
+	Message string           `json:"message"`
+	Payload []S3FileMetaData `json:"payload,omitempty"`
+	Email   string           `json:"email,omitempty"`
+	Report  *ReportContent   `json:"report,omitempty"`
 }
 
 // GenericSchema - used in the GenericHandler (complex data object)
