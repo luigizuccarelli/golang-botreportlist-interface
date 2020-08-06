@@ -71,6 +71,7 @@ func (c *MockConnectors) Do(req *http.Request) (*http.Response, error) {
 // ListObjectsV2 - S3 wrapper
 func (c *MockConnectors) ListObjectsV2(in *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error) {
 	var objs []*s3.Object
+
 	if c.Flag == "true" {
 		return nil, errors.New("forced s3 ListObjectsV2 error")
 	}
@@ -85,7 +86,8 @@ func (c *MockConnectors) ListObjectsV2(in *s3.ListObjectsV2Input) (*s3.ListObjec
 	newsize := int64(6464)
 	newsc := "NEXTTEST"
 	objs = append(objs, &s3.Object{Key: &newname, LastModified: &newlast, Size: &newsize, StorageClass: &newsc})
-	s := &s3.ListObjectsV2Output{Contents: objs}
+	flag := false
+	s := &s3.ListObjectsV2Output{Contents: objs, IsTruncated: &flag}
 	return s, nil
 }
 

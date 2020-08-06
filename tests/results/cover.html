@@ -54,7 +54,7 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/handlers/handlers.go (91.3%)</option>
+				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/handlers/handlers.go (87.7%)</option>
 				
 				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/validator/validate.go (100.0%)</option>
 				
@@ -314,6 +314,172 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
         b, _ := json.MarshalIndent(response, "", "        ")
         fmt.Fprintf(w, string(b))
         return</span>
+}
+
+// GetStatsHandler - handler that returns servisBOT accuracy
+func GetStatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) <span class="cov8" title="1">{
+        var servisbotRequest *schema.ServisBOTRequest
+
+        addHeaders(w, r)
+        // read the jwt token data in the body
+        // we don't use authorization header as the token can get quite large due to form data
+        // ensure we don't have nil - it will cause a null pointer exception
+        if r.Body == nil </span><span class="cov0" title="0">{
+                r.Body = ioutil.NopCloser(bytes.NewBufferString(""))
+        }</span>
+        <span class="cov8" title="1">body, err := ioutil.ReadAll(r.Body)
+        if err != nil </span><span class="cov8" title="1">{
+                msg := "GetStatsHandler body data %v"
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        <span class="cov8" title="1">con.Trace("GetStatsHandler request body : %s", string(body))
+
+        // unmarshal result from mw backend
+        errs := json.Unmarshal(body, &amp;servisbotRequest)
+        if errs != nil </span><span class="cov8" title="1">{
+                msg := "GetStatsHandler could not unmarshal input data from servisBOT to schema %v"
+                con.Error(msg, errs)
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        // check the jwt token
+        <span class="cov8" title="1">_, err = verifyJwtToken(servisbotRequest.JwtToken)
+        if err != nil </span><span class="cov8" title="1">{
+                msg := "GetStatsHandler verifyToken  %v"
+                con.Error(msg, err)
+                b := responseErrorFormat(http.StatusForbidden, w, msg, err)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        <span class="cov8" title="1">data, err := ioutil.ReadFile("../../stats.json")
+        if err != nil </span><span class="cov0" title="0">{
+                msg := "GetStatsHandler reading stats  %v"
+                con.Error(msg, err)
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        // update our schema
+        <span class="cov8" title="1">w.WriteHeader(http.StatusOK)
+        fmt.Fprintf(w, string(data))
+        return</span>
+}
+
+// StatsHandler - handler that interfaces with s3 bucket
+func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) <span class="cov8" title="1">{
+        var stats *schema.Stats
+        var listOpts *s3.ListObjectsV2Input
+
+        bucket := os.Getenv(AWSREPORTBUCKET)
+        // we don't need to worry about jwt
+        // Get the list of items
+        // Check if we have a lastobject item
+        data, _ := ioutil.ReadFile("./stats.json")
+        // update our schema
+        err := json.Unmarshal(data, &amp;stats)
+        if err != nil </span><span class="cov8" title="1">{
+                stats = &amp;schema.Stats{}
+                con.Error("Converting json %v", err)
+        }</span>
+
+        <span class="cov8" title="1">if stats.LastObject != "" </span><span class="cov0" title="0">{
+                listOpts = &amp;s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String("Email"), StartAfter: aws.String(stats.LastObject)}
+        }</span> else<span class="cov8" title="1"> {
+                listOpts = &amp;s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String("Email")}
+        }</span>
+
+        <span class="cov8" title="1">resp, err := con.ListObjectsV2(listOpts)
+        if err != nil </span><span class="cov8" title="1">{
+                msg := "Unable to list items in bucket %q, %v"
+                con.Error(msg, bucket, err)
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, bucket, err)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        <span class="cov8" title="1">var name string = ""
+        var count float64 = 0.0
+        var accuracy float64 = 0.0
+
+        for _, item := range resp.Contents </span><span class="cov8" title="1">{
+                name = *item.Key
+                count++
+                accuracy = accuracy + getObject(con, bucket, name)
+        }</span>
+
+        // check for more objects in the bucket
+        <span class="cov8" title="1">for </span><span class="cov8" title="1">{
+                resp, err = con.ListObjectsV2(&amp;s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String("Email"), StartAfter: aws.String(name)})
+                if err != nil </span><span class="cov0" title="0">{
+                        msg := "Unable to list items in bucket %q, %v"
+                        con.Error(msg, bucket, err)
+                        b := responseErrorFormat(http.StatusInternalServerError, w, msg, bucket, err)
+                        fmt.Fprintf(w, string(b))
+                        break</span>
+                }
+                <span class="cov8" title="1">for _, item := range resp.Contents </span><span class="cov8" title="1">{
+                        name = *item.Key
+                        count++
+                        accuracy = accuracy + getObject(con, bucket, name)
+                }</span>
+                <span class="cov8" title="1">if !*resp.IsTruncated </span><span class="cov8" title="1">{
+                        break</span>
+                }
+        }
+
+        <span class="cov8" title="1">con.Trace("StatsHandler last object %s", name)
+        con.Trace("Found %f items in bucket %s", count, name)
+        con.Trace("Success items in bucket %f", accuracy)
+        con.Trace("Accuracy %  %f", accuracy)
+        s := &amp;schema.Stats{RecordCount: count, SuccessCount: accuracy, Accuracy: (accuracy / count), LastObject: name}
+        b, _ := json.MarshalIndent(s, "", "        ")
+        // store to local disk
+        ioutil.WriteFile("../../stats.json", b, 0755)
+        fmt.Fprintf(w, string(b))
+        response := &amp;schema.Response{Code: http.StatusOK, Status: "OK", Message: fmt.Sprintf("StatsHandler call successful (accuracy %f) ", accuracy/count)}
+        w.WriteHeader(http.StatusOK)
+        b, _ = json.MarshalIndent(response, "", "        ")
+        fmt.Fprintf(w, string(b))
+        return</span>
+}
+
+func getObject(con connectors.Clients, bucket string, key string) float64 <span class="cov8" title="1">{
+        var rc *schema.ReportContent
+        const MSG string = "Function getObject %v"
+
+        input := &amp;s3.GetObjectInput{
+                Bucket: aws.String(bucket),
+                Key:    aws.String(key),
+        }
+
+        result, err := con.GetObject(input)
+        if err != nil </span><span class="cov0" title="0">{
+                con.Error(MSG, err)
+                return 0.0
+        }</span>
+
+        // unmarshal result from mw backend
+        <span class="cov8" title="1">errs := json.Unmarshal([]byte(result), &amp;rc)
+        if errs != nil </span><span class="cov8" title="1">{
+                con.Error(MSG, errs)
+                return 0.0
+        }</span>
+
+        <span class="cov0" title="0">if rc.Success != "" </span><span class="cov0" title="0">{
+                if rc.Success == "true" </span><span class="cov0" title="0">{
+                        return 1.0
+                }</span> else<span class="cov0" title="0"> {
+                        return 0.0
+                }</span>
+        }
+        <span class="cov0" title="0">return 0.0</span>
 }
 
 func IsAlive(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{

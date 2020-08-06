@@ -54,8 +54,10 @@ type S3FileMetaData struct {
 	LastModified time.Time `json:"lastmodified"`
 	Size         int64     `json:"size"`
 	StorageClass string    `json:"class"`
+	IsTruncated  string    `json:"isTruncated"`
 }
 
+// ReportContent schema
 type ReportContent struct {
 	Channel             string      `json:"Channel"`
 	Affiliate           string      `json:"Affiliate"`
@@ -69,4 +71,14 @@ type ReportContent struct {
 	ProcessOutcome      string      `json:"ProcessOutcome"`
 	Entities            []string    `json:"Entities"`
 	EmailClassification []string    `json:"EmailClassification"`
+	UserClassification  []string    `json:"UserClassification"`
+	Success             string      `json:"success"`
+}
+
+// Stats schema
+type Stats struct {
+	RecordCount  float64 `json:"recordCount"`
+	SuccessCount float64 `json:"successCount"`
+	Accuracy     float64 `json:"accuracy"`
+	LastObject   string  `json:"lastobject,omitempty"`
 }

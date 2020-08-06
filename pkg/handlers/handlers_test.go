@@ -484,4 +484,146 @@ func TestAllHandlers(t *testing.T) {
 		}
 	})
 
+	t.Run("GetStatsHandler : should pass ", func(t *testing.T) {
+		var STATUS int = 200
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
+
+		requestPayload := `{  "data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/stats", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			GetStatsHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "GetStatsHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("GetStatsHandler : should fail (force error readall)", func(t *testing.T) {
+		var STATUS int = 500
+		os.Setenv("TOKEN", "1212121")
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/stats", errReader(0))
+		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			GetStatsHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "GetStatsHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("GetStatsHandler : should fail (json data)", func(t *testing.T) {
+		var STATUS int = 500
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
+
+		requestPayload := `{  data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/stats", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			GetStatsHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "GetStatsHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("GetStatsHandler : should fail (JWT)", func(t *testing.T) {
+		var STATUS int = 403
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr")
+
+		requestPayload := `{  "data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/stats", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			GetStatsHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "GetStatsHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("StatsHandler : should pass ", func(t *testing.T) {
+		var STATUS int = 200
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
+
+		requestPayload := `{  "data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/collect/stats", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			StatsHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "StatsHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("StatsHandler : should fail (force list error) ", func(t *testing.T) {
+		var STATUS int = 500
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
+
+		requestPayload := `{  "data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/collect/stats", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		conn.Meta("true")
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			StatsHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "StatsHandler", rr.Code, STATUS))
+		}
+	})
+
 }

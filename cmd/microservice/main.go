@@ -41,6 +41,14 @@ func startHttpServer(con connectors.Clients) *http.Server {
 		handlers.ReportObjectHandler(w, req, con)
 	}).Methods("POST", "OPTIONS")
 
+	r.HandleFunc("/api/v1/stats", func(w http.ResponseWriter, req *http.Request) {
+		handlers.GetStatsHandler(w, req, con)
+	}).Methods("POST", "OPTIONS")
+
+	r.HandleFunc("/api/v1/collect/stats", func(w http.ResponseWriter, req *http.Request) {
+		handlers.StatsHandler(w, req, con)
+	}).Methods("POST", "OPTIONS")
+
 	r.HandleFunc("/api/v2/sys/info/isalive", handlers.IsAlive).Methods("GET")
 
 	sh := http.StripPrefix("/api/v2/api-docs/", http.FileServer(http.Dir("./swaggerui/")))
