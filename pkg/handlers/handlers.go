@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/connectors"
@@ -337,7 +338,16 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 		}
 	}
 
-	go getStats(con, listOpts)
+	var wg sync.WaitGroup
+	if os.Getenv("TESTING") != "" && os.Getenv("TESTING") == "true" {
+		wg.Add(1)
+	}
+
+	go calculateStats(con, listOpts, &wg)
+
+	if os.Getenv("TESTING") != "" && os.Getenv("TESTING") == "true" {
+		wg.Wait()
+	}
 
 	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: fmt.Sprintf("StatsHandler process started in background - check timestamp %d", time.Now().Unix())}
 	w.WriteHeader(http.StatusOK)
@@ -346,11 +356,14 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 	return
 }
 
-func getStats(con connectors.Clients, listOpts *s3.ListObjectsV2Input) error {
+func calculateStats(con connectors.Clients, listOpts *s3.ListObjectsV2Input, wg *sync.WaitGroup) error {
+
+	defer wg.Done()
+	con.Trace("Function getStats opts %v", listOpts)
 	bucket := os.Getenv(AWSREPORTBUCKET)
 	resp, err := con.ListObjectsV2(listOpts)
 	if err != nil {
-		msg := "StatsHandler unable to list items in bucket %q, %v"
+		msg := "Function calculateStats unable to list items in bucket %q, %v"
 		con.Error(msg, bucket, err)
 		return err
 	}
@@ -359,7 +372,7 @@ func getStats(con connectors.Clients, listOpts *s3.ListObjectsV2Input) error {
 	var count float64 = 0.0
 	var accuracy float64 = 0.0
 
-	con.Trace("StatsHandler listObjects count %d", len(resp.Contents))
+	con.Trace("Function calculateStats listObjects count %d", len(resp.Contents))
 	for _, item := range resp.Contents {
 		name = *item.Key
 		count++
@@ -367,42 +380,43 @@ func getStats(con connectors.Clients, listOpts *s3.ListObjectsV2Input) error {
 	}
 
 	// check for more objects in the bucket
-	if *resp.IsTruncated {
-		for {
-			resp, err = con.ListObjectsV2(&s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL), StartAfter: aws.String(name)})
-			if err != nil {
-				msg := "StatsHandler unable to list items in bucket %q, %v"
-				con.Error(msg, bucket, err)
-				return err
-			}
-			con.Trace("StatsHandler listObjects (second loop) count %d", len(resp.Contents))
-			for _, item := range resp.Contents {
-				name = *item.Key
-				count++
-				accuracy = accuracy + getObject(con, bucket, name)
-			}
-			if !*resp.IsTruncated {
-				break
-			}
+	//if *resp.IsTruncated {
+	for {
+		resp, err = con.ListObjectsV2(&s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL), StartAfter: aws.String(name)})
+		if err != nil {
+			msg := "Function calculateStats unable to list items in bucket %q, %v"
+			con.Error(msg, bucket, err)
+			return err
+		}
+		con.Trace("Function calculateStats listObjects (second loop) count %d", len(resp.Contents))
+		for _, item := range resp.Contents {
+			name = *item.Key
+			count++
+			accuracy = accuracy + getObject(con, bucket, name)
+		}
+		if !*resp.IsTruncated {
+			break
 		}
 	}
+	//}
 
-	con.Trace("StatsHandler last object %s", name)
-	con.Trace("StatsHandler found %f items in bucket %s", count, bucket)
-	con.Trace("StatsHandler success items in bucket %f", accuracy)
-	con.Trace("StatsHandler bot accuracy %f", accuracy)
+	con.Trace("Function calculateStats last object %s", name)
+	con.Trace("Function calculateStats found %f items in bucket %s", count, bucket)
+	con.Trace("Function calculateStats success items in bucket %f", accuracy)
+	con.Trace("Function calculateStats bot accuracy %f", accuracy)
 	s := &schema.Stats{RecordCount: count, SuccessCount: accuracy, Accuracy: (accuracy / count), LastObject: name, LastUpdated: time.Now().Unix()}
+	con.Trace("Function calculateStats struct %v", s)
 	b, _ := json.MarshalIndent(s, "", "	")
 	filename := "Stats/stats.json"
 	// store to s3
 	opts := &s3.PutObjectInput{Bucket: &bucket, Key: &filename, Body: aws.ReadSeekCloser(strings.NewReader(string(b)))}
 	_, e := con.PutObject(opts)
 	if e != nil {
-		msg := "StatsHandler putobject %v"
+		msg := "Function calculateStats putobject %v"
 		con.Error(msg, e)
 		return e
 	}
-
+	con.Trace("Function calculateStats putobject succeeded %s", string(b))
 	// all good
 	return nil
 }

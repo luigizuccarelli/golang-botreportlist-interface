@@ -581,10 +581,10 @@ func TestAllHandlers(t *testing.T) {
 		var STATUS int = 200
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
+		os.Setenv("TESTING", "true")
 
-		requestPayload := `{  "data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/collect/stats/false", bytes.NewBuffer([]byte(requestPayload)))
+		req, _ := http.NewRequest("POST", "/api/v1/collect/stats/false", nil)
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
 
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -54,7 +54,7 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/handlers/handlers.go (86.0%)</option>
+				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/handlers/handlers.go (86.7%)</option>
 				
 				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/validator/validate.go (100.0%)</option>
 				
@@ -81,6 +81,7 @@ import (
         "net/http"
         "os"
         "strings"
+        "sync"
         "time"
 
         "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/connectors"
@@ -409,20 +410,32 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
                 }</span>
         }
 
-        <span class="cov8" title="1">go getStats(con, listOpts)
+        <span class="cov8" title="1">var wg sync.WaitGroup
+        if os.Getenv("TESTING") != "" &amp;&amp; os.Getenv("TESTING") == "true" </span><span class="cov8" title="1">{
+                wg.Add(1)
+        }</span>
 
-        response := &amp;schema.Response{Code: http.StatusOK, Status: "OK", Message: fmt.Sprintf("StatsHandler process started in background - check timestamp %d", time.Now().Unix())}
+        <span class="cov8" title="1">go calculateStats(con, listOpts, &amp;wg)
+
+        if os.Getenv("TESTING") != "" &amp;&amp; os.Getenv("TESTING") == "true" </span><span class="cov8" title="1">{
+                wg.Wait()
+        }</span>
+
+        <span class="cov8" title="1">response := &amp;schema.Response{Code: http.StatusOK, Status: "OK", Message: fmt.Sprintf("StatsHandler process started in background - check timestamp %d", time.Now().Unix())}
         w.WriteHeader(http.StatusOK)
         b, _ := json.MarshalIndent(response, "", "        ")
         fmt.Fprintf(w, string(b))
         return</span>
 }
 
-func getStats(con connectors.Clients, listOpts *s3.ListObjectsV2Input) error <span class="cov8" title="1">{
+func calculateStats(con connectors.Clients, listOpts *s3.ListObjectsV2Input, wg *sync.WaitGroup) error <span class="cov8" title="1">{
+
+        defer wg.Done()
+        con.Trace("Function getStats opts %v", listOpts)
         bucket := os.Getenv(AWSREPORTBUCKET)
         resp, err := con.ListObjectsV2(listOpts)
         if err != nil </span><span class="cov0" title="0">{
-                msg := "StatsHandler unable to list items in bucket %q, %v"
+                msg := "Function calculateStats unable to list items in bucket %q, %v"
                 con.Error(msg, bucket, err)
                 return err
         }</span>
@@ -431,7 +444,7 @@ func getStats(con connectors.Clients, listOpts *s3.ListObjectsV2Input) error <sp
         var count float64 = 0.0
         var accuracy float64 = 0.0
 
-        con.Trace("StatsHandler listObjects count %d", len(resp.Contents))
+        con.Trace("Function calculateStats listObjects count %d", len(resp.Contents))
         for _, item := range resp.Contents </span><span class="cov8" title="1">{
                 name = *item.Key
                 count++
@@ -439,44 +452,45 @@ func getStats(con connectors.Clients, listOpts *s3.ListObjectsV2Input) error <sp
         }</span>
 
         // check for more objects in the bucket
-        <span class="cov8" title="1">if *resp.IsTruncated </span><span class="cov8" title="1">{
-                for </span><span class="cov8" title="1">{
-                        resp, err = con.ListObjectsV2(&amp;s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL), StartAfter: aws.String(name)})
-                        if err != nil </span><span class="cov0" title="0">{
-                                msg := "StatsHandler unable to list items in bucket %q, %v"
-                                con.Error(msg, bucket, err)
-                                return err
-                        }</span>
-                        <span class="cov8" title="1">con.Trace("StatsHandler listObjects (second loop) count %d", len(resp.Contents))
-                        for _, item := range resp.Contents </span><span class="cov8" title="1">{
-                                name = *item.Key
-                                count++
-                                accuracy = accuracy + getObject(con, bucket, name)
-                        }</span>
-                        <span class="cov8" title="1">if !*resp.IsTruncated </span><span class="cov8" title="1">{
-                                break</span>
-                        }
+        //if *resp.IsTruncated {
+        <span class="cov8" title="1">for </span><span class="cov8" title="1">{
+                resp, err = con.ListObjectsV2(&amp;s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL), StartAfter: aws.String(name)})
+                if err != nil </span><span class="cov0" title="0">{
+                        msg := "Function calculateStats unable to list items in bucket %q, %v"
+                        con.Error(msg, bucket, err)
+                        return err
+                }</span>
+                <span class="cov8" title="1">con.Trace("Function calculateStats listObjects (second loop) count %d", len(resp.Contents))
+                for _, item := range resp.Contents </span><span class="cov8" title="1">{
+                        name = *item.Key
+                        count++
+                        accuracy = accuracy + getObject(con, bucket, name)
+                }</span>
+                <span class="cov8" title="1">if !*resp.IsTruncated </span><span class="cov8" title="1">{
+                        break</span>
                 }
         }
+        //}
 
-        <span class="cov8" title="1">con.Trace("StatsHandler last object %s", name)
-        con.Trace("StatsHandler found %f items in bucket %s", count, bucket)
-        con.Trace("StatsHandler success items in bucket %f", accuracy)
-        con.Trace("StatsHandler bot accuracy %f", accuracy)
+        <span class="cov8" title="1">con.Trace("Function calculateStats last object %s", name)
+        con.Trace("Function calculateStats found %f items in bucket %s", count, bucket)
+        con.Trace("Function calculateStats success items in bucket %f", accuracy)
+        con.Trace("Function calculateStats bot accuracy %f", accuracy)
         s := &amp;schema.Stats{RecordCount: count, SuccessCount: accuracy, Accuracy: (accuracy / count), LastObject: name, LastUpdated: time.Now().Unix()}
+        con.Trace("Function calculateStats struct %v", s)
         b, _ := json.MarshalIndent(s, "", "        ")
         filename := "Stats/stats.json"
         // store to s3
         opts := &amp;s3.PutObjectInput{Bucket: &amp;bucket, Key: &amp;filename, Body: aws.ReadSeekCloser(strings.NewReader(string(b)))}
         _, e := con.PutObject(opts)
         if e != nil </span><span class="cov0" title="0">{
-                msg := "StatsHandler putobject %v"
+                msg := "Function calculateStats putobject %v"
                 con.Error(msg, e)
                 return e
         }</span>
-
+        <span class="cov8" title="1">con.Trace("Function calculateStats putobject succeeded %s", string(b))
         // all good
-        <span class="cov0" title="0">return nil</span>
+        return nil</span>
 }
 
 func getObject(con connectors.Clients, bucket string, key string) float64 <span class="cov8" title="1">{

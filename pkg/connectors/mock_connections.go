@@ -89,7 +89,7 @@ func (c *MockConnectors) ListObjectsV2(in *s3.ListObjectsV2Input) (*s3.ListObjec
 	newsize := int64(6464)
 	newsc := "NEXTTEST"
 	objs = append(objs, &s3.Object{Key: &newname, LastModified: &newlast, Size: &newsize, StorageClass: &newsc})
-	if count >= 2 {
+	if count >= 1 {
 		truncated = false
 		count = 0
 	}
