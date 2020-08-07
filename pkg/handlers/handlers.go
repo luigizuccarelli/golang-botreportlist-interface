@@ -358,7 +358,9 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 
 func calculateStats(con connectors.Clients, listOpts *s3.ListObjectsV2Input, wg *sync.WaitGroup) error {
 
-	defer wg.Done()
+	if os.Getenv("TESTING") != "" && os.Getenv("TESTING") == "true" {
+		defer wg.Done()
+	}
 	con.Trace("Function getStats opts %v", listOpts)
 	bucket := os.Getenv(AWSREPORTBUCKET)
 	resp, err := con.ListObjectsV2(listOpts)
