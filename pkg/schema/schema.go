@@ -81,4 +81,5 @@ type Stats struct {
 	SuccessCount float64 `json:"successCount"`
 	Accuracy     float64 `json:"accuracy"`
 	LastObject   string  `json:"lastobject,omitempty"`
+	LastUpdated  int64   `json:"lastupdated"`
 }

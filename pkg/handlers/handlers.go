@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/connectors"
 	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/schema"
@@ -286,18 +287,20 @@ func GetStatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clie
 		return
 	}
 
-	data, err := ioutil.ReadFile("/go/stats.json")
-	if err != nil {
+	bucket := os.Getenv(AWSREPORTBUCKET)
+	filename := "Stats/stats.json"
+	opts := &s3.GetObjectInput{Bucket: &bucket, Key: &filename}
+	res, er := con.GetObject(opts)
+	if er != nil {
 		msg := "GetStatsHandler reading stats  %v"
-		con.Error(msg, err)
-		b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+		con.Error(msg, er)
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, er)
 		fmt.Fprintf(w, string(b))
 		return
 	}
 
-	// update our schema
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, string(data))
+	fmt.Fprintf(w, string(res))
 	return
 }
 
@@ -307,7 +310,6 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 	var listOpts *s3.ListObjectsV2Input
 
 	vars := mux.Vars(r)
-
 	bucket := os.Getenv(AWSREPORTBUCKET)
 
 	// we don't need to worry about jwt
@@ -317,9 +319,11 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 	} else {
 		// Get the list of items
 		// Check if we have a lastobject item
-		data, _ := ioutil.ReadFile("/go/stats.json")
+		filename := "Stats/stats.json"
+		opts := &s3.GetObjectInput{Bucket: &bucket, Key: &filename}
+		res, _ := con.GetObject(opts)
 		// update our schema
-		err := json.Unmarshal(data, &stats)
+		err := json.Unmarshal([]byte(res), &stats)
 		if err != nil {
 			stats = &schema.Stats{}
 			con.Error("StatsHandler converting json %v", err)
@@ -374,11 +378,20 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 	con.Trace("StatsHandler found %f items in bucket %s", count, name)
 	con.Trace("StatsHandler success items in bucket %f", accuracy)
 	con.Trace("StatsHandler bot accuracy %  %f", accuracy)
-	s := &schema.Stats{RecordCount: count, SuccessCount: accuracy, Accuracy: (accuracy / count), LastObject: name}
+	s := &schema.Stats{RecordCount: count, SuccessCount: accuracy, Accuracy: (accuracy / count), LastObject: name, LastUpdated: time.Now().Unix()}
 	b, _ := json.MarshalIndent(s, "", "	")
-	// store to local disk
-	ioutil.WriteFile("/go/stats.json", b, 0755)
-	fmt.Fprintf(w, string(b))
+	filename := "Stats/stats.json"
+	// store to s3
+	opts := &s3.PutObjectInput{Bucket: &bucket, Key: &filename, Body: aws.ReadSeekCloser(strings.NewReader(string(b)))}
+	_, e := con.PutObject(opts)
+	if e != nil {
+		msg := "StatsHandler putobject %v"
+		con.Error(msg, e)
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, e)
+		fmt.Fprintf(w, string(b))
+		return
+	}
+
 	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: fmt.Sprintf("StatsHandler call successful (accuracy %f) ", accuracy/count)}
 	w.WriteHeader(http.StatusOK)
 	b, _ = json.MarshalIndent(response, "", "	")

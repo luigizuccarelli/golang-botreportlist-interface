@@ -54,7 +54,7 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/handlers/handlers.go (86.7%)</option>
+				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/handlers/handlers.go (86.3%)</option>
 				
 				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/validator/validate.go (100.0%)</option>
 				
@@ -81,6 +81,7 @@ import (
         "net/http"
         "os"
         "strings"
+        "time"
 
         "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/connectors"
         "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/schema"
@@ -358,18 +359,20 @@ func GetStatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clie
                 return
         }</span>
 
-        <span class="cov8" title="1">data, err := ioutil.ReadFile("/go/stats.json")
-        if err != nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">bucket := os.Getenv(AWSREPORTBUCKET)
+        filename := "Stats/stats.json"
+        opts := &amp;s3.GetObjectInput{Bucket: &amp;bucket, Key: &amp;filename}
+        res, er := con.GetObject(opts)
+        if er != nil </span><span class="cov0" title="0">{
                 msg := "GetStatsHandler reading stats  %v"
-                con.Error(msg, err)
-                b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+                con.Error(msg, er)
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, er)
                 fmt.Fprintf(w, string(b))
                 return
         }</span>
 
-        // update our schema
         <span class="cov8" title="1">w.WriteHeader(http.StatusOK)
-        fmt.Fprintf(w, string(data))
+        fmt.Fprintf(w, string(res))
         return</span>
 }
 
@@ -379,7 +382,6 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
         var listOpts *s3.ListObjectsV2Input
 
         vars := mux.Vars(r)
-
         bucket := os.Getenv(AWSREPORTBUCKET)
 
         // we don't need to worry about jwt
@@ -389,16 +391,18 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
         }</span> else<span class="cov8" title="1"> {
                 // Get the list of items
                 // Check if we have a lastobject item
-                data, _ := ioutil.ReadFile("/go/stats.json")
+                filename := "Stats/stats.json"
+                opts := &amp;s3.GetObjectInput{Bucket: &amp;bucket, Key: &amp;filename}
+                res, _ := con.GetObject(opts)
                 // update our schema
-                err := json.Unmarshal(data, &amp;stats)
-                if err != nil </span><span class="cov0" title="0">{
+                err := json.Unmarshal([]byte(res), &amp;stats)
+                if err != nil </span><span class="cov8" title="1">{
                         stats = &amp;schema.Stats{}
                         con.Error("StatsHandler converting json %v", err)
                 }</span>
-                <span class="cov8" title="1">if stats.LastObject != "" </span><span class="cov8" title="1">{
+                <span class="cov8" title="1">if stats.LastObject != "" </span><span class="cov0" title="0">{
                         listOpts = &amp;s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL), StartAfter: aws.String(stats.LastObject)}
-                }</span> else<span class="cov0" title="0"> {
+                }</span> else<span class="cov8" title="1"> {
                         listOpts = &amp;s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL)}
                 }</span>
         }
@@ -446,12 +450,21 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
         con.Trace("StatsHandler found %f items in bucket %s", count, name)
         con.Trace("StatsHandler success items in bucket %f", accuracy)
         con.Trace("StatsHandler bot accuracy %  %f", accuracy)
-        s := &amp;schema.Stats{RecordCount: count, SuccessCount: accuracy, Accuracy: (accuracy / count), LastObject: name}
+        s := &amp;schema.Stats{RecordCount: count, SuccessCount: accuracy, Accuracy: (accuracy / count), LastObject: name, LastUpdated: time.Now().Unix()}
         b, _ := json.MarshalIndent(s, "", "        ")
-        // store to local disk
-        ioutil.WriteFile("/go/stats.json", b, 0755)
-        fmt.Fprintf(w, string(b))
-        response := &amp;schema.Response{Code: http.StatusOK, Status: "OK", Message: fmt.Sprintf("StatsHandler call successful (accuracy %f) ", accuracy/count)}
+        filename := "Stats/stats.json"
+        // store to s3
+        opts := &amp;s3.PutObjectInput{Bucket: &amp;bucket, Key: &amp;filename, Body: aws.ReadSeekCloser(strings.NewReader(string(b)))}
+        _, e := con.PutObject(opts)
+        if e != nil </span><span class="cov0" title="0">{
+                msg := "StatsHandler putobject %v"
+                con.Error(msg, e)
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, e)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        <span class="cov8" title="1">response := &amp;schema.Response{Code: http.StatusOK, Status: "OK", Message: fmt.Sprintf("StatsHandler call successful (accuracy %f) ", accuracy/count)}
         w.WriteHeader(http.StatusOK)
         b, _ = json.MarshalIndent(response, "", "        ")
         fmt.Fprintf(w, string(b))
