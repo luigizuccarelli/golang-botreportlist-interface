@@ -25,6 +25,7 @@ const (
 	AWSBUCKET       string = "AWS_BUCKET"
 	AWSREPORTBUCKET string = "AWS_REPORT_BUCKET"
 	CHANNEL         string = "Email/"
+	EMAIL           string = "Email"
 )
 
 // ListBucketHandler - handler that interfaces with s3 bucket
@@ -75,9 +76,9 @@ func ListBucketHandler(w http.ResponseWriter, r *http.Request, con connectors.Cl
 
 	// Get the list of items
 	if vars["lastobject"] != "" && vars["lastobject"] != "false" {
-		in = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String("Email"), StartAfter: aws.String(vars["lastobject"])}
+		in = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL), StartAfter: aws.String(vars["lastobject"])}
 	} else {
-		in = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String("Email")}
+		in = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL)}
 	}
 
 	resp, err := con.ListObjectsV2(in)
@@ -285,7 +286,7 @@ func GetStatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clie
 		return
 	}
 
-	data, err := ioutil.ReadFile("../../stats.json")
+	data, err := ioutil.ReadFile("/go/stats.json")
 	if err != nil {
 		msg := "GetStatsHandler reading stats  %v"
 		con.Error(msg, err)
@@ -305,27 +306,34 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 	var stats *schema.Stats
 	var listOpts *s3.ListObjectsV2Input
 
-	bucket := os.Getenv(AWSREPORTBUCKET)
-	// we don't need to worry about jwt
-	// Get the list of items
-	// Check if we have a lastobject item
-	data, _ := ioutil.ReadFile("./stats.json")
-	// update our schema
-	err := json.Unmarshal(data, &stats)
-	if err != nil {
-		stats = &schema.Stats{}
-		con.Error("Converting json %v", err)
-	}
+	vars := mux.Vars(r)
 
-	if stats.LastObject != "" {
-		listOpts = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String("Email"), StartAfter: aws.String(stats.LastObject)}
+	bucket := os.Getenv(AWSREPORTBUCKET)
+
+	// we don't need to worry about jwt
+	if vars["init"] != "" && vars["init"] == "true" {
+		// re-run from the first record
+		listOpts = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL)}
 	} else {
-		listOpts = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String("Email")}
+		// Get the list of items
+		// Check if we have a lastobject item
+		data, _ := ioutil.ReadFile("/go/stats.json")
+		// update our schema
+		err := json.Unmarshal(data, &stats)
+		if err != nil {
+			stats = &schema.Stats{}
+			con.Error("StatsHandler converting json %v", err)
+		}
+		if stats.LastObject != "" {
+			listOpts = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL), StartAfter: aws.String(stats.LastObject)}
+		} else {
+			listOpts = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL)}
+		}
 	}
 
 	resp, err := con.ListObjectsV2(listOpts)
 	if err != nil {
-		msg := "Unable to list items in bucket %q, %v"
+		msg := "StatsHandler unable to list items in bucket %q, %v"
 		con.Error(msg, bucket, err)
 		b := responseErrorFormat(http.StatusInternalServerError, w, msg, bucket, err)
 		fmt.Fprintf(w, string(b))
@@ -344,9 +352,9 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 
 	// check for more objects in the bucket
 	for {
-		resp, err = con.ListObjectsV2(&s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String("Email"), StartAfter: aws.String(name)})
+		resp, err = con.ListObjectsV2(&s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL), StartAfter: aws.String(name)})
 		if err != nil {
-			msg := "Unable to list items in bucket %q, %v"
+			msg := "StatsHandler unable to list items in bucket %q, %v"
 			con.Error(msg, bucket, err)
 			b := responseErrorFormat(http.StatusInternalServerError, w, msg, bucket, err)
 			fmt.Fprintf(w, string(b))
@@ -363,13 +371,13 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 	}
 
 	con.Trace("StatsHandler last object %s", name)
-	con.Trace("Found %f items in bucket %s", count, name)
-	con.Trace("Success items in bucket %f", accuracy)
-	con.Trace("Accuracy %  %f", accuracy)
+	con.Trace("StatsHandler found %f items in bucket %s", count, name)
+	con.Trace("StatsHandler success items in bucket %f", accuracy)
+	con.Trace("StatsHandler bot accuracy %  %f", accuracy)
 	s := &schema.Stats{RecordCount: count, SuccessCount: accuracy, Accuracy: (accuracy / count), LastObject: name}
 	b, _ := json.MarshalIndent(s, "", "	")
 	// store to local disk
-	ioutil.WriteFile("../../stats.json", b, 0755)
+	ioutil.WriteFile("/go/stats.json", b, 0755)
 	fmt.Fprintf(w, string(b))
 	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: fmt.Sprintf("StatsHandler call successful (accuracy %f) ", accuracy/count)}
 	w.WriteHeader(http.StatusOK)

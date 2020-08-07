@@ -45,7 +45,7 @@ func startHttpServer(con connectors.Clients) *http.Server {
 		handlers.GetStatsHandler(w, req, con)
 	}).Methods("POST", "OPTIONS")
 
-	r.HandleFunc("/api/v1/collect/stats", func(w http.ResponseWriter, req *http.Request) {
+	r.HandleFunc("/api/v1/collect/stats/{init}", func(w http.ResponseWriter, req *http.Request) {
 		handlers.StatsHandler(w, req, con)
 	}).Methods("POST", "OPTIONS")
 
