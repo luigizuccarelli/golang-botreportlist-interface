@@ -314,11 +314,13 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 
 	// we don't need to worry about jwt
 	if vars["init"] != "" && vars["init"] == "true" {
+		con.Trace("StatsHandler init set to true - starting re-run")
 		// re-run from the first record
 		listOpts = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL)}
 	} else {
 		// Get the list of items
 		// Check if we have a lastobject item
+		con.Trace("StatsHandler init not set")
 		filename := "Stats/stats.json"
 		opts := &s3.GetObjectInput{Bucket: &bucket, Key: &filename}
 		res, _ := con.GetObject(opts)
@@ -335,19 +337,29 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 		}
 	}
 
+	go getStats(con, listOpts)
+
+	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: fmt.Sprintf("StatsHandler process started in background - check timestamp %d", time.Now().Unix())}
+	w.WriteHeader(http.StatusOK)
+	b, _ := json.MarshalIndent(response, "", "	")
+	fmt.Fprintf(w, string(b))
+	return
+}
+
+func getStats(con connectors.Clients, listOpts *s3.ListObjectsV2Input) error {
+	bucket := os.Getenv(AWSREPORTBUCKET)
 	resp, err := con.ListObjectsV2(listOpts)
 	if err != nil {
 		msg := "StatsHandler unable to list items in bucket %q, %v"
 		con.Error(msg, bucket, err)
-		b := responseErrorFormat(http.StatusInternalServerError, w, msg, bucket, err)
-		fmt.Fprintf(w, string(b))
-		return
+		return err
 	}
 
 	var name string = ""
 	var count float64 = 0.0
 	var accuracy float64 = 0.0
 
+	con.Trace("StatsHandler listObjects count %d", len(resp.Contents))
 	for _, item := range resp.Contents {
 		name = *item.Key
 		count++
@@ -355,29 +367,30 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 	}
 
 	// check for more objects in the bucket
-	for {
-		resp, err = con.ListObjectsV2(&s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL), StartAfter: aws.String(name)})
-		if err != nil {
-			msg := "StatsHandler unable to list items in bucket %q, %v"
-			con.Error(msg, bucket, err)
-			b := responseErrorFormat(http.StatusInternalServerError, w, msg, bucket, err)
-			fmt.Fprintf(w, string(b))
-			break
-		}
-		for _, item := range resp.Contents {
-			name = *item.Key
-			count++
-			accuracy = accuracy + getObject(con, bucket, name)
-		}
-		if !*resp.IsTruncated {
-			break
+	if *resp.IsTruncated {
+		for {
+			resp, err = con.ListObjectsV2(&s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL), StartAfter: aws.String(name)})
+			if err != nil {
+				msg := "StatsHandler unable to list items in bucket %q, %v"
+				con.Error(msg, bucket, err)
+				return err
+			}
+			con.Trace("StatsHandler listObjects (second loop) count %d", len(resp.Contents))
+			for _, item := range resp.Contents {
+				name = *item.Key
+				count++
+				accuracy = accuracy + getObject(con, bucket, name)
+			}
+			if !*resp.IsTruncated {
+				break
+			}
 		}
 	}
 
 	con.Trace("StatsHandler last object %s", name)
-	con.Trace("StatsHandler found %f items in bucket %s", count, name)
+	con.Trace("StatsHandler found %f items in bucket %s", count, bucket)
 	con.Trace("StatsHandler success items in bucket %f", accuracy)
-	con.Trace("StatsHandler bot accuracy %  %f", accuracy)
+	con.Trace("StatsHandler bot accuracy %f", accuracy)
 	s := &schema.Stats{RecordCount: count, SuccessCount: accuracy, Accuracy: (accuracy / count), LastObject: name, LastUpdated: time.Now().Unix()}
 	b, _ := json.MarshalIndent(s, "", "	")
 	filename := "Stats/stats.json"
@@ -387,16 +400,11 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 	if e != nil {
 		msg := "StatsHandler putobject %v"
 		con.Error(msg, e)
-		b := responseErrorFormat(http.StatusInternalServerError, w, msg, e)
-		fmt.Fprintf(w, string(b))
-		return
+		return e
 	}
 
-	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: fmt.Sprintf("StatsHandler call successful (accuracy %f) ", accuracy/count)}
-	w.WriteHeader(http.StatusOK)
-	b, _ = json.MarshalIndent(response, "", "	")
-	fmt.Fprintf(w, string(b))
-	return
+	// all good
+	return nil
 }
 
 func getObject(con connectors.Clients, bucket string, key string) float64 {
@@ -417,7 +425,7 @@ func getObject(con connectors.Clients, bucket string, key string) float64 {
 	// unmarshal result from mw backend
 	errs := json.Unmarshal([]byte(result), &rc)
 	if errs != nil {
-		con.Error(MSG, errs)
+		con.Error(MSG+" unmarshalling data to schema", errs)
 		return 0.0
 	}
 

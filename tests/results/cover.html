@@ -54,7 +54,7 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/handlers/handlers.go (86.3%)</option>
+				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/handlers/handlers.go (86.0%)</option>
 				
 				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/validator/validate.go (100.0%)</option>
 				
@@ -386,11 +386,13 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 
         // we don't need to worry about jwt
         if vars["init"] != "" &amp;&amp; vars["init"] == "true" </span><span class="cov0" title="0">{
+                con.Trace("StatsHandler init set to true - starting re-run")
                 // re-run from the first record
                 listOpts = &amp;s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL)}
         }</span> else<span class="cov8" title="1"> {
                 // Get the list of items
                 // Check if we have a lastobject item
+                con.Trace("StatsHandler init not set")
                 filename := "Stats/stats.json"
                 opts := &amp;s3.GetObjectInput{Bucket: &amp;bucket, Key: &amp;filename}
                 res, _ := con.GetObject(opts)
@@ -407,19 +409,29 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
                 }</span>
         }
 
-        <span class="cov8" title="1">resp, err := con.ListObjectsV2(listOpts)
-        if err != nil </span><span class="cov8" title="1">{
+        <span class="cov8" title="1">go getStats(con, listOpts)
+
+        response := &amp;schema.Response{Code: http.StatusOK, Status: "OK", Message: fmt.Sprintf("StatsHandler process started in background - check timestamp %d", time.Now().Unix())}
+        w.WriteHeader(http.StatusOK)
+        b, _ := json.MarshalIndent(response, "", "        ")
+        fmt.Fprintf(w, string(b))
+        return</span>
+}
+
+func getStats(con connectors.Clients, listOpts *s3.ListObjectsV2Input) error <span class="cov8" title="1">{
+        bucket := os.Getenv(AWSREPORTBUCKET)
+        resp, err := con.ListObjectsV2(listOpts)
+        if err != nil </span><span class="cov0" title="0">{
                 msg := "StatsHandler unable to list items in bucket %q, %v"
                 con.Error(msg, bucket, err)
-                b := responseErrorFormat(http.StatusInternalServerError, w, msg, bucket, err)
-                fmt.Fprintf(w, string(b))
-                return
+                return err
         }</span>
 
         <span class="cov8" title="1">var name string = ""
         var count float64 = 0.0
         var accuracy float64 = 0.0
 
+        con.Trace("StatsHandler listObjects count %d", len(resp.Contents))
         for _, item := range resp.Contents </span><span class="cov8" title="1">{
                 name = *item.Key
                 count++
@@ -427,29 +439,30 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
         }</span>
 
         // check for more objects in the bucket
-        <span class="cov8" title="1">for </span><span class="cov8" title="1">{
-                resp, err = con.ListObjectsV2(&amp;s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL), StartAfter: aws.String(name)})
-                if err != nil </span><span class="cov0" title="0">{
-                        msg := "StatsHandler unable to list items in bucket %q, %v"
-                        con.Error(msg, bucket, err)
-                        b := responseErrorFormat(http.StatusInternalServerError, w, msg, bucket, err)
-                        fmt.Fprintf(w, string(b))
-                        break</span>
-                }
-                <span class="cov8" title="1">for _, item := range resp.Contents </span><span class="cov8" title="1">{
-                        name = *item.Key
-                        count++
-                        accuracy = accuracy + getObject(con, bucket, name)
-                }</span>
-                <span class="cov8" title="1">if !*resp.IsTruncated </span><span class="cov8" title="1">{
-                        break</span>
+        <span class="cov8" title="1">if *resp.IsTruncated </span><span class="cov8" title="1">{
+                for </span><span class="cov8" title="1">{
+                        resp, err = con.ListObjectsV2(&amp;s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL), StartAfter: aws.String(name)})
+                        if err != nil </span><span class="cov0" title="0">{
+                                msg := "StatsHandler unable to list items in bucket %q, %v"
+                                con.Error(msg, bucket, err)
+                                return err
+                        }</span>
+                        <span class="cov8" title="1">con.Trace("StatsHandler listObjects (second loop) count %d", len(resp.Contents))
+                        for _, item := range resp.Contents </span><span class="cov8" title="1">{
+                                name = *item.Key
+                                count++
+                                accuracy = accuracy + getObject(con, bucket, name)
+                        }</span>
+                        <span class="cov8" title="1">if !*resp.IsTruncated </span><span class="cov8" title="1">{
+                                break</span>
+                        }
                 }
         }
 
         <span class="cov8" title="1">con.Trace("StatsHandler last object %s", name)
-        con.Trace("StatsHandler found %f items in bucket %s", count, name)
+        con.Trace("StatsHandler found %f items in bucket %s", count, bucket)
         con.Trace("StatsHandler success items in bucket %f", accuracy)
-        con.Trace("StatsHandler bot accuracy %  %f", accuracy)
+        con.Trace("StatsHandler bot accuracy %f", accuracy)
         s := &amp;schema.Stats{RecordCount: count, SuccessCount: accuracy, Accuracy: (accuracy / count), LastObject: name, LastUpdated: time.Now().Unix()}
         b, _ := json.MarshalIndent(s, "", "        ")
         filename := "Stats/stats.json"
@@ -459,16 +472,11 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
         if e != nil </span><span class="cov0" title="0">{
                 msg := "StatsHandler putobject %v"
                 con.Error(msg, e)
-                b := responseErrorFormat(http.StatusInternalServerError, w, msg, e)
-                fmt.Fprintf(w, string(b))
-                return
+                return e
         }</span>
 
-        <span class="cov8" title="1">response := &amp;schema.Response{Code: http.StatusOK, Status: "OK", Message: fmt.Sprintf("StatsHandler call successful (accuracy %f) ", accuracy/count)}
-        w.WriteHeader(http.StatusOK)
-        b, _ = json.MarshalIndent(response, "", "        ")
-        fmt.Fprintf(w, string(b))
-        return</span>
+        // all good
+        <span class="cov0" title="0">return nil</span>
 }
 
 func getObject(con connectors.Clients, bucket string, key string) float64 <span class="cov8" title="1">{
@@ -489,7 +497,7 @@ func getObject(con connectors.Clients, bucket string, key string) float64 <span 
         // unmarshal result from mw backend
         <span class="cov8" title="1">errs := json.Unmarshal([]byte(result), &amp;rc)
         if errs != nil </span><span class="cov8" title="1">{
-                con.Error(MSG, errs)
+                con.Error(MSG+" unmarshalling data to schema", errs)
                 return 0.0
         }</span>
 
