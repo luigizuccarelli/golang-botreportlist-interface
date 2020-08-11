@@ -34,19 +34,19 @@ type Credentials struct {
 }
 
 type ServisBOTRequest struct {
-	Email          string `json:"email"`
-	JwtToken       string `json:"jwtToken"`
-	Subscription   string `json:"subscription"`
-	Reason         string `json:"reason"`
-	CustomerNumber string `json:"customerNumber"`
-	SubRef         string `json:"subref,omitempty"`
-	PubCode        string `json:"pubcode,omitempty"`
-	UniqueId       string `json:"uniqueid,omitempty"`
-	PhoneNumber    string `json:"phonenumber,omitempty"`
-	RenewalFlag    string `json:"renewalFlag,omitempty"`
-	Subject        string `json:"subject,omitempty"`
-	Note           string `json:"note,omitempty"`
-	Data           string `json:"data,omitempty"`
+	Email          string        `json:"email"`
+	JwtToken       string        `json:"jwtToken"`
+	Subscription   string        `json:"subscription"`
+	Reason         string        `json:"reason"`
+	CustomerNumber string        `json:"customerNumber"`
+	SubRef         string        `json:"subref,omitempty"`
+	PubCode        string        `json:"pubcode,omitempty"`
+	UniqueId       string        `json:"uniqueid,omitempty"`
+	PhoneNumber    string        `json:"phonenumber,omitempty"`
+	RenewalFlag    string        `json:"renewalFlag,omitempty"`
+	Subject        string        `json:"subject,omitempty"`
+	Note           string        `json:"note,omitempty"`
+	Data           ReportContent `json:"data,omitempty"`
 }
 
 type S3FileMetaData struct {
@@ -72,7 +72,7 @@ type ReportContent struct {
 	Entities            []string    `json:"Entities"`
 	EmailClassification []string    `json:"EmailClassification"`
 	UserClassification  []string    `json:"UserClassification"`
-	Success             string      `json:"success"`
+	Success             bool        `json:"success"`
 }
 
 // Stats schema

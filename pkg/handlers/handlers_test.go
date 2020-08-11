@@ -137,7 +137,7 @@ func TestAllHandlers(t *testing.T) {
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr")
 
-		requestPayload := `{ "data":"test", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		requestPayload := `{ "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/list/reports/234324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
@@ -311,7 +311,7 @@ func TestAllHandlers(t *testing.T) {
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
-		requestPayload := `{  "data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		requestPayload, _ := ioutil.ReadFile("../../tests/payload.json")
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
@@ -341,10 +341,10 @@ func TestAllHandlers(t *testing.T) {
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
-		requestPayload := `{  "data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		requestPayload := `{  "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		conn := connectors.NewTestConnectors("../../tests/report-payload.json", STATUS, logger)
 		conn.SetMode("pull")
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -428,7 +428,7 @@ func TestAllHandlers(t *testing.T) {
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr")
 
-		requestPayload := `{  "data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		requestPayload, _ := ioutil.ReadFile("../../tests/payload.json")
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
@@ -489,7 +489,7 @@ func TestAllHandlers(t *testing.T) {
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
-		requestPayload := `{  "data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		requestPayload := `{  "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/stats", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
@@ -558,7 +558,7 @@ func TestAllHandlers(t *testing.T) {
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr")
 
-		requestPayload := `{  "data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		requestPayload := `{  "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/stats", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)

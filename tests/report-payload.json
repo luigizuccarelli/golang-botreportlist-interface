@@ -1,6 +1,4 @@
 {
-  "jwttoken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTU4NDU0NjYsInVzZXIiOiI0MTE5OTc3OSIsImN1c3RvbWVyTnVtYmVyIjoibmEifQ.m8EW788_u7sunZA0ODKhVMnDjSfloEKcdX9exE-PgVw",
-  "data":{
     "Channel":"Email",
     "Affiliate":"BH-01",
     "MessageId":"<20200811110454.1.A59120BA9E8203E6@mg.moneyandmarkets.com>",
@@ -19,5 +17,4 @@
       "Cancel"
     ],
     "success":true
-  }
 }

@@ -222,13 +222,30 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
 			fmt.Fprintf(w, string(b))
 			return
 		}
-		// unmarshal result from mw backend
-		json.Unmarshal(res, &report)
+		// unmarshal result
+		err := json.Unmarshal(res, &report)
+		if err != nil {
+			msg := "ReportObjectHandler (pull)  unmarshalling data to schema %v"
+			con.Error(msg, err)
+			b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+			fmt.Fprintf(w, string(b))
+			return
+		}
 		con.Trace("ReportObjectHandler (get) data %s", res)
 		response = &schema.Response{Code: http.StatusOK, Status: "OK", Message: "ReportObjectHandler s3 object call (get) successful", Report: report}
 	} else {
 		// This is s POST
-		opts := &s3.PutObjectInput{Bucket: &bucket, Key: &filename, Body: aws.ReadSeekCloser(strings.NewReader(servisbotRequest.Data))}
+		// we now need to marshal
+		//var rc *schema.ReportContent
+		b, err := json.MarshalIndent(servisbotRequest.Data, "", " ")
+		if err != nil {
+			msg := "ReportObjectHandler (post) marshalling data %v"
+			con.Error(msg, err)
+			b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+			fmt.Fprintf(w, string(b))
+			return
+		}
+		opts := &s3.PutObjectInput{Bucket: &bucket, Key: &filename, Body: aws.ReadSeekCloser(strings.NewReader(string(b)))}
 		res, e := con.PutObject(opts)
 		if e != nil {
 			msg := "ReportObjectHandler %v"
@@ -445,13 +462,12 @@ func getObject(con connectors.Clients, bucket string, key string) float64 {
 		return 0.0
 	}
 
-	if rc.Success != "" {
-		if rc.Success == "true" {
-			return 1.0
-		} else {
-			return 0.0
-		}
+	if rc.Success {
+		return 1.0
+	} else {
+		return 0.0
 	}
+
 	return 0.0
 }
 

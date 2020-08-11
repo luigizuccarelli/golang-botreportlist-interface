@@ -104,7 +104,7 @@ func (c *MockConnectors) GetObject(opts *s3.GetObjectInput) ([]byte, error) {
 	if c.Flag == "true" {
 		return b, errors.New("forced s3 ListObjectsV2 error")
 	}
-	b = []byte("GetObject -> this is working!!!")
+	b, _ = ioutil.ReadFile("../../tests/report-payload.json")
 	return b, nil
 }
 
