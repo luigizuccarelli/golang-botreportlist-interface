@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/microlib/simple"
+	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 var count int = 0
@@ -19,6 +20,7 @@ type FakeS3 struct {
 
 // Mock all connections
 type MockConnectors struct {
+	NewRelic  *newrelic.Application
 	S3Service *FakeS3
 	Http      *http.Client
 	Logger    *simple.Logger
@@ -133,6 +135,11 @@ func NewHttpTestClient(fn RoundTripFunc) *http.Client {
 	}
 }
 
+// StartTransaction - wrapper for new relic
+func (c *MockConnectors) StartTransaction(name string) *newrelic.Transaction {
+	return c.NewRelic.StartTransaction(name)
+}
+
 // NewTestConnector - creates all test connectors
 func NewTestConnectors(file string, code int, logger *simple.Logger) Clients {
 
@@ -154,6 +161,11 @@ func NewTestConnectors(file string, code int, logger *simple.Logger) Clients {
 		}
 	})
 
-	conns := &MockConnectors{S3Service: &FakeS3{}, Http: httpclient, Logger: logger, Flag: "false"}
+	nr, err := newrelic.NewApplication(
+		newrelic.ConfigAppName("ServisBOT-TEST"),
+		newrelic.ConfigLicense("9b2cc6e8631b12bf6d7800434535e0e45568NRAL"),
+	)
+
+	conns := &MockConnectors{NewRelic: nr, S3Service: &FakeS3{}, Http: httpclient, Logger: logger, Flag: "false"}
 	return conns
 }

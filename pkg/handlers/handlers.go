@@ -37,7 +37,13 @@ func ListBucketHandler(w http.ResponseWriter, r *http.Request, con connectors.Cl
 	var servisbotRequest *schema.ServisBOTRequest
 	vars := mux.Vars(r)
 
-	addHeaders(w, r)
+	txn := con.StartTransaction("ListBucketHandler")
+	defer txn.End()
+	// req is a *http.Request, this marks the transaction as a web transaction
+	txn.SetWebRequestHTTP(r)
+	writer := txn.SetWebResponse(w)
+	addHeaders(writer, r)
+
 	// read the jwt token data in the body
 	// we don't use authorization header as the token can get quite large due to form data
 	// ensure we don't have nil - it will cause a null pointer exception
@@ -47,8 +53,8 @@ func ListBucketHandler(w http.ResponseWriter, r *http.Request, con connectors.Cl
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		msg := "Body data (JWT) %v"
-		b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
-		fmt.Fprintf(w, string(b))
+		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, err)
+		fmt.Fprintf(writer, string(b))
 		return
 	}
 
@@ -59,8 +65,8 @@ func ListBucketHandler(w http.ResponseWriter, r *http.Request, con connectors.Cl
 	if errs != nil {
 		msg := "GenericHandler could not unmarshal input data from servisBOT to schema %v"
 		con.Error(msg, errs)
-		b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
-		fmt.Fprintf(w, string(b))
+		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, errs)
+		fmt.Fprintf(writer, string(b))
 		return
 	}
 
@@ -69,8 +75,8 @@ func ListBucketHandler(w http.ResponseWriter, r *http.Request, con connectors.Cl
 	if err != nil {
 		msg := "ListBucketHandler verifyToken  %v"
 		con.Error(msg, err)
-		b := responseErrorFormat(http.StatusForbidden, w, msg, err)
-		fmt.Fprintf(w, string(b))
+		b := responseErrorFormat(http.StatusForbidden, writer, msg, err)
+		fmt.Fprintf(writer, string(b))
 		return
 	}
 
@@ -96,7 +102,7 @@ func ListBucketHandler(w http.ResponseWriter, r *http.Request, con connectors.Cl
 	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: "ListBucketHandler s3 object call successful", Payload: files}
 	w.WriteHeader(http.StatusOK)
 	b, _ := json.MarshalIndent(response, "", "	")
-	fmt.Fprintf(w, string(b))
+	fmt.Fprintf(writer, string(b))
 	return
 }
 
@@ -106,8 +112,13 @@ func EmailObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.C
 
 	bucket := os.Getenv(AWSBUCKET)
 	vars := mux.Vars(r)
+	txn := con.StartTransaction("EmailObjectHandler")
+	defer txn.End()
+	// req is a *http.Request, this marks the transaction as a web transaction
+	txn.SetWebRequestHTTP(r)
+	writer := txn.SetWebResponse(w)
+	addHeaders(writer, r)
 
-	addHeaders(w, r)
 	// read the jwt token data in the body
 	// we don't use authorization header as the token can get quite large due to form data
 	// ensure we don't have nil - it will cause a null pointer exception
@@ -117,8 +128,8 @@ func EmailObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.C
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		msg := "EmailObjectHandler body data %v"
-		b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
-		fmt.Fprintf(w, string(b))
+		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, err)
+		fmt.Fprintf(writer, string(b))
 		return
 	}
 
@@ -129,8 +140,8 @@ func EmailObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.C
 	if errs != nil {
 		msg := "EmailObjectHandler could not unmarshal input data from servisBOT to schema %v"
 		con.Error(msg, errs)
-		b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
-		fmt.Fprintf(w, string(b))
+		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, errs)
+		fmt.Fprintf(writer, string(b))
 		return
 	}
 
@@ -139,8 +150,8 @@ func EmailObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.C
 	if err != nil {
 		msg := "EmailObjectHandler verifyToken  %v"
 		con.Error(msg, err)
-		b := responseErrorFormat(http.StatusForbidden, w, msg, err)
-		fmt.Fprintf(w, string(b))
+		b := responseErrorFormat(http.StatusForbidden, writer, msg, err)
+		fmt.Fprintf(writer, string(b))
 		return
 	}
 
@@ -150,16 +161,16 @@ func EmailObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.C
 	if e != nil {
 		msg := "EmailObjectHandler %v"
 		con.Error(msg, e)
-		b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
-		fmt.Fprintf(w, string(b))
+		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, errs)
+		fmt.Fprintf(writer, string(b))
 		return
 	}
 
 	con.Trace("EmailObjectHandler data %s", string(data))
 	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: "EmailObjectHandler s3 object call successful", Email: string(data)}
-	w.WriteHeader(http.StatusOK)
+	writer.WriteHeader(http.StatusOK)
 	b, _ := json.MarshalIndent(response, "", "	")
-	fmt.Fprintf(w, string(b))
+	fmt.Fprintf(writer, string(b))
 	return
 }
 
@@ -172,7 +183,12 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
 	bucket := os.Getenv(AWSREPORTBUCKET)
 	vars := mux.Vars(r)
 
-	addHeaders(w, r)
+	txn := con.StartTransaction("ReportObjectHandler")
+	defer txn.End()
+	// req is a *http.Request, this marks the transaction as a web transaction
+	txn.SetWebRequestHTTP(r)
+	writer := txn.SetWebResponse(w)
+	addHeaders(writer, r)
 
 	// read the jwt token data in the body
 	// we don't use authorization header as the token can get quite large due to form data
@@ -183,8 +199,8 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		msg := "ReportObjectHandler body data error : access forbidden %v"
-		b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
-		fmt.Fprintf(w, string(b))
+		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, err)
+		fmt.Fprintf(writer, string(b))
 		return
 	}
 
@@ -195,8 +211,8 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
 	if errs != nil {
 		msg := "ReportObjectHandler could not unmarshal input data from servisBOT to schema %v"
 		con.Error(msg, errs)
-		b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
-		fmt.Fprintf(w, string(b))
+		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, errs)
+		fmt.Fprintf(writer, string(b))
 		return
 	}
 
@@ -205,8 +221,8 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
 	if err != nil {
 		msg := "ReportObjectHandler verifyToken  %v"
 		con.Error(msg, err)
-		b := responseErrorFormat(http.StatusForbidden, w, msg, err)
-		fmt.Fprintf(w, string(b))
+		b := responseErrorFormat(http.StatusForbidden, writer, msg, err)
+		fmt.Fprintf(writer, string(b))
 		return
 	}
 
@@ -218,8 +234,8 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
 		if er != nil {
 			msg := "ReportObjectHandler %v"
 			con.Error(msg, er)
-			b := responseErrorFormat(http.StatusInternalServerError, w, msg, er)
-			fmt.Fprintf(w, string(b))
+			b := responseErrorFormat(http.StatusInternalServerError, writer, msg, er)
+			fmt.Fprintf(writer, string(b))
 			return
 		}
 		// unmarshal result
@@ -227,11 +243,11 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
 		if err != nil {
 			msg := "ReportObjectHandler (pull)  unmarshalling data to schema %v"
 			con.Error(msg, err)
-			b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
-			fmt.Fprintf(w, string(b))
+			b := responseErrorFormat(http.StatusInternalServerError, writer, msg, err)
+			fmt.Fprintf(writer, string(b))
 			return
 		}
-		con.Trace("ReportObjectHandler (get) data %s", res)
+		con.Trace("ReportObjectHandler (get) data %s", string(res))
 		response = &schema.Response{Code: http.StatusOK, Status: "OK", Message: "ReportObjectHandler s3 object call (get) successful", Report: report}
 	} else {
 		// This is s POST
@@ -241,8 +257,8 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
 		if err != nil {
 			msg := "ReportObjectHandler (post) marshalling data %v"
 			con.Error(msg, err)
-			b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
-			fmt.Fprintf(w, string(b))
+			b := responseErrorFormat(http.StatusInternalServerError, writer, msg, err)
+			fmt.Fprintf(writer, string(b))
 			return
 		}
 		opts := &s3.PutObjectInput{Bucket: &bucket, Key: &filename, Body: aws.ReadSeekCloser(strings.NewReader(string(b)))}
@@ -250,17 +266,17 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
 		if e != nil {
 			msg := "ReportObjectHandler %v"
 			con.Error(msg, e)
-			b := responseErrorFormat(http.StatusInternalServerError, w, msg, e)
-			fmt.Fprintf(w, string(b))
+			b := responseErrorFormat(http.StatusInternalServerError, writer, msg, e)
+			fmt.Fprintf(writer, string(b))
 			return
 		}
-		con.Trace("ReportObjectHandler (post) data %s", res)
+		con.Trace("ReportObjectHandler (post) data %s", *res)
 		response = &schema.Response{Code: http.StatusOK, Status: "OK", Message: "ReportObjectHandler s3 object call (post) successful"}
 	}
 
-	w.WriteHeader(http.StatusOK)
+	writer.WriteHeader(http.StatusOK)
 	b, _ := json.MarshalIndent(response, "", "	")
-	fmt.Fprintf(w, string(b))
+	fmt.Fprintf(writer, string(b))
 	return
 }
 
@@ -268,7 +284,13 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
 func GetStatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
 	var servisbotRequest *schema.ServisBOTRequest
 
-	addHeaders(w, r)
+	txn := con.StartTransaction("GetStatsHandler")
+	defer txn.End()
+	// req is a *http.Request, this marks the transaction as a web transaction
+	txn.SetWebRequestHTTP(r)
+	writer := txn.SetWebResponse(w)
+	addHeaders(writer, r)
+
 	// read the jwt token data in the body
 	// we don't use authorization header as the token can get quite large due to form data
 	// ensure we don't have nil - it will cause a null pointer exception
@@ -278,8 +300,8 @@ func GetStatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clie
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		msg := "GetStatsHandler body data %v"
-		b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
-		fmt.Fprintf(w, string(b))
+		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, err)
+		fmt.Fprintf(writer, string(b))
 		return
 	}
 
@@ -290,8 +312,8 @@ func GetStatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clie
 	if errs != nil {
 		msg := "GetStatsHandler could not unmarshal input data from servisBOT to schema %v"
 		con.Error(msg, errs)
-		b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
-		fmt.Fprintf(w, string(b))
+		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, errs)
+		fmt.Fprintf(writer, string(b))
 		return
 	}
 
@@ -300,8 +322,8 @@ func GetStatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clie
 	if err != nil {
 		msg := "GetStatsHandler verifyToken  %v"
 		con.Error(msg, err)
-		b := responseErrorFormat(http.StatusForbidden, w, msg, err)
-		fmt.Fprintf(w, string(b))
+		b := responseErrorFormat(http.StatusForbidden, writer, msg, err)
+		fmt.Fprintf(writer, string(b))
 		return
 	}
 
@@ -312,13 +334,13 @@ func GetStatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clie
 	if er != nil {
 		msg := "GetStatsHandler reading stats  %v"
 		con.Error(msg, er)
-		b := responseErrorFormat(http.StatusInternalServerError, w, msg, er)
-		fmt.Fprintf(w, string(b))
+		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, er)
+		fmt.Fprintf(writer, string(b))
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, string(res))
+	fmt.Fprintf(writer, string(res))
 	return
 }
 
@@ -329,6 +351,12 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 
 	vars := mux.Vars(r)
 	bucket := os.Getenv(AWSREPORTBUCKET)
+	txn := con.StartTransaction("StatsHandler")
+	defer txn.End()
+	// req is a *http.Request, this marks the transaction as a web transaction
+	txn.SetWebRequestHTTP(r)
+	writer := txn.SetWebResponse(w)
+	addHeaders(writer, r)
 
 	// we don't need to worry about jwt
 	if vars["init"] != "" && vars["init"] == "true" {
@@ -369,7 +397,7 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: fmt.Sprintf("StatsHandler process started in background - check timestamp %d", time.Now().Unix())}
 	w.WriteHeader(http.StatusOK)
 	b, _ := json.MarshalIndent(response, "", "	")
-	fmt.Fprintf(w, string(b))
+	fmt.Fprintf(writer, string(b))
 	return
 }
 

@@ -11,10 +11,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/microlib/simple"
+	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 // Connections struct - all backend connections in a common object
 type Connectors struct {
+	NewRelic  *newrelic.Application
 	S3Session *session.Session
 	Http      *http.Client
 	Logger    *simple.Logger
@@ -23,6 +25,11 @@ type Connectors struct {
 
 // NewClientConnections - fucntion that creates all client connections and returns the interface
 func NewClientConnections(logger *simple.Logger) Clients {
+	// setup new relic
+	nr, err := newrelic.NewApplication(
+		newrelic.ConfigAppName("ServisBOT"),
+		newrelic.ConfigLicense("9b2cc6e8631b12bf6d7800434535e0e45568NRAL"),
+	)
 	// set up http object
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -36,7 +43,7 @@ func NewClientConnections(logger *simple.Logger) Clients {
 	}
 	// svc := s3.New(sess)
 
-	return &Connectors{S3Session: sess, Http: httpClient, Logger: logger}
+	return &Connectors{NewRelic: nr, S3Session: sess, Http: httpClient, Logger: logger}
 }
 
 // Error - log wrapper
@@ -116,4 +123,9 @@ func (c *Connectors) PutObject(opts *s3.PutObjectInput) (*string, error) {
 		return &s, err
 	}
 	return result.ETag, nil
+}
+
+// StartTransaction - wrapper for new relic
+func (c *Connectors) StartTransaction(name string) *newrelic.Transaction {
+	return c.NewRelic.StartTransaction(name)
 }

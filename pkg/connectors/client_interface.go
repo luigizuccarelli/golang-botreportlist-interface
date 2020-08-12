@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 // Client Interface - used as a receiver and can be overriden for testing
@@ -19,4 +20,6 @@ type Clients interface {
 	ListObjectsV2(in *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error)
 	GetObject(in *s3.GetObjectInput) ([]byte, error)
 	PutObject(in *s3.PutObjectInput) (*string, error)
+	// new relic
+	StartTransaction(name string) *newrelic.Transaction
 }
