@@ -11,17 +11,38 @@ import (
 	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/validator"
 	"github.com/gorilla/mux"
 	"github.com/microlib/simple"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
-	logger *simple.Logger
+	logger       *simple.Logger
+	httpDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "s3bucket_manager_http_duration_seconds",
+		Help: "Duration of HTTP requests.",
+	}, []string{"path"})
 )
+
+// prometheusMiddleware implements mux.MiddlewareFunc.
+func prometheusMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		route := mux.CurrentRoute(r)
+		path, _ := route.GetPathTemplate()
+		timer := prometheus.NewTimer(httpDuration.WithLabelValues(path))
+		next.ServeHTTP(w, r)
+		timer.ObserveDuration()
+	})
+}
 
 // startHttpServer - private function
 func startHttpServer(con connectors.Clients) *http.Server {
 	srv := &http.Server{Addr: ":" + os.Getenv("SERVER_PORT")}
 
 	r := mux.NewRouter()
+
+	r.Use(prometheusMiddleware)
+	r.Path("/api/v2/metrics").Handler(promhttp.Handler())
 
 	r.HandleFunc("/api/v1/list/reports/{lastobject}", func(w http.ResponseWriter, req *http.Request) {
 		handlers.ListBucketHandler(w, req, con)

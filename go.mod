@@ -8,4 +8,5 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/microlib/simple v0.0.0-20170927110707-4b906e1855fd
 	github.com/newrelic/go-agent/v3 v3.8.1
+	github.com/prometheus/client_golang v1.7.1
 )

@@ -342,7 +342,7 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
                         fmt.Fprintf(writer, string(b))
                         return
                 }</span>
-                <span class="cov8" title="1">con.Trace("ReportObjectHandler (post) data %s", &amp;res)
+                <span class="cov8" title="1">con.Trace("ReportObjectHandler (post) data %s", *res)
                 response = &amp;schema.Response{Code: http.StatusOK, Status: "OK", Message: "ReportObjectHandler s3 object call (post) successful"}</span>
         }
 
