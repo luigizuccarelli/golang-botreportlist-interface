@@ -16,6 +16,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+const (
+	CONTENTTYPE     string = "Content-Type"
+	APPLICATIONJSON string = "application/json"
+)
+
 var (
 	logger       *simple.Logger
 	httpDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
@@ -27,6 +32,11 @@ var (
 // prometheusMiddleware implements mux.MiddlewareFunc.
 func prometheusMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(CONTENTTYPE, APPLICATIONJSON)
+		// use this for cors
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Accept-Language")
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 		timer := prometheus.NewTimer(httpDuration.WithLabelValues(path))
