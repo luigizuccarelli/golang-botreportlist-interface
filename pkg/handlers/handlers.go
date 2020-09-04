@@ -242,7 +242,7 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
 		return
 	}
 
-	key := servisbotRequest.Data.Id
+	key := "Email/" + servisbotRequest.Data.Id
 	opts := &s3.GetObjectInput{Bucket: &bucket, Key: &key}
 	data, e := con.GetObject(opts)
 	if e != nil {

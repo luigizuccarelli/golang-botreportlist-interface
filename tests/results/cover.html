@@ -314,7 +314,7 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
                 return
         }</span>
 
-        <span class="cov8" title="1">key := servisbotRequest.Data.Id
+        <span class="cov8" title="1">key := "Email/" + servisbotRequest.Data.Id
         opts := &amp;s3.GetObjectInput{Bucket: &amp;bucket, Key: &amp;key}
         data, e := con.GetObject(opts)
         if e != nil </span><span class="cov8" title="1">{
