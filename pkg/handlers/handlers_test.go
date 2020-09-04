@@ -10,7 +10,7 @@ import (
 	"os"
 	"testing"
 
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/connectors"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors"
 	"github.com/gorilla/mux"
 	"github.com/microlib/simple"
 )
@@ -31,7 +31,7 @@ func TestAllHandlers(t *testing.T) {
 		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/api/v2/sys/info/isalive", nil)
-		connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		connectors.NewTestConnectors(STATUS, logger)
 		handler := http.HandlerFunc(IsAlive)
 		handler.ServeHTTP(rr, req)
 
@@ -46,22 +46,22 @@ func TestAllHandlers(t *testing.T) {
 		}
 	})
 
-	t.Run("ListBucketHandler : should pass", func(t *testing.T) {
+	t.Run("ListHandler : should pass", func(t *testing.T) {
 		var STATUS int = 200
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
 		requestPayload := `{  "email": "cduffy@tfd.ie", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/list/reports/234324", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		req, _ := http.NewRequest("POST", "/api/v1/list/reports/0/10", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
 			"lastobject": "test",
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ListBucketHandler(w, r, conn)
+			ListHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -71,25 +71,24 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ListBucketHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ListHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("ListBucketHandler : should fail (force error)", func(t *testing.T) {
+	t.Run("ListHandler : should fail (force read body error)", func(t *testing.T) {
 		var STATUS int = 500
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
-
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/list/reports/234324", errReader(0))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		req, _ := http.NewRequest("POST", "/api/v1/list/reports/0/10", errReader(0))
+		conn := connectors.NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
 			"lastobject": "test",
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ListBucketHandler(w, r, conn)
+			ListHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -99,141 +98,26 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ListBucketHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ListHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("ListBucketHandler : should fail (json data)", func(t *testing.T) {
-		var STATUS int = 500
-		os.Setenv("TOKEN", "1212121")
-		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
-
-		requestPayload := `{  jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
-		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/list/reports/234324", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-		//Hack to try to fake gorilla/mux vars
-		vars := map[string]string{
-			"lastobject": "test",
-		}
-		req = mux.SetURLVars(req, vars)
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ListBucketHandler(w, r, conn)
-		})
-		handler.ServeHTTP(rr, req)
-		body, e := ioutil.ReadAll(rr.Body)
-		if e != nil {
-			t.Fatalf("Should not fail : found error %v", e)
-		}
-		logger.Trace(fmt.Sprintf("Response %s", string(body)))
-		// ignore errors here
-		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ListBucketHandler", rr.Code, STATUS))
-		}
-	})
-
-	t.Run("ListBucketHandler : should fail (JWT)", func(t *testing.T) {
-		var STATUS int = 403
-		os.Setenv("TOKEN", "1212121")
-		os.Setenv("JWT_SECRETKEY", "Thr")
-
-		requestPayload := `{ "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
-		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/list/reports/234324", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-		//Hack to try to fake gorilla/mux vars
-		vars := map[string]string{
-			"lastobject": "test",
-		}
-		req = mux.SetURLVars(req, vars)
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ListBucketHandler(w, r, conn)
-		})
-		handler.ServeHTTP(rr, req)
-		body, e := ioutil.ReadAll(rr.Body)
-		if e != nil {
-			t.Fatalf("Should not fail : found error %v", e)
-		}
-		logger.Trace(fmt.Sprintf("Response %s", string(body)))
-		// ignore errors here
-		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ListBucketHandler", rr.Code, STATUS))
-		}
-	})
-
-	t.Run("EmailObjectHandler : should pass", func(t *testing.T) {
-		var STATUS int = 200
-		os.Setenv("TOKEN", "1212121")
-		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
-
-		requestPayload := `{  "email": "cduffy@tfd.ie", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
-		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/emails/234324", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-		//Hack to try to fake gorilla/mux vars
-		vars := map[string]string{
-			"key": "test",
-		}
-		req = mux.SetURLVars(req, vars)
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			EmailObjectHandler(w, r, conn)
-		})
-		handler.ServeHTTP(rr, req)
-		body, e := ioutil.ReadAll(rr.Body)
-		if e != nil {
-			t.Fatalf("Should not fail : found error %v", e)
-		}
-		logger.Trace(fmt.Sprintf("Response %s", string(body)))
-		// ignore errors here
-		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "EmailObjectHandler", rr.Code, STATUS))
-		}
-	})
-
-	t.Run("EmailObjectHandler : should fail (force error)", func(t *testing.T) {
-		var STATUS int = 500
-		os.Setenv("TOKEN", "1212121")
-		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
-
-		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/emails/4324324324", errReader(0))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-		//Hack to try to fake gorilla/mux vars
-		vars := map[string]string{
-			"key": "test",
-		}
-		req = mux.SetURLVars(req, vars)
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			EmailObjectHandler(w, r, conn)
-		})
-		handler.ServeHTTP(rr, req)
-		body, e := ioutil.ReadAll(rr.Body)
-		if e != nil {
-			t.Fatalf("Should not fail : found error %v", e)
-		}
-		logger.Trace(fmt.Sprintf("Response %s", string(body)))
-		// ignore errors here
-		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "EmailObjectHandler", rr.Code, STATUS))
-		}
-	})
-
-	t.Run("EmailObjectHandler : should fail (json)", func(t *testing.T) {
+	t.Run("ListHandler : should fail (bad request json)", func(t *testing.T) {
 		var STATUS int = 500
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
 		requestPayload := `{  email": "cduffy@tfd.ie", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/emails/234324", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
+		req, _ := http.NewRequest("POST", "/api/v1/list/reports/0/10", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
-			"key": "test",
+			"lastobject": "test",
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			EmailObjectHandler(w, r, conn)
+			ListHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -243,56 +127,56 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "EmailObjectHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ListHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("EmailObjectHandler : should fail (JWT)", func(t *testing.T) {
+	t.Run("ListHandler : should fail (bad jwt token)", func(t *testing.T) {
 		var STATUS int = 403
 		os.Setenv("TOKEN", "1212121")
-		os.Setenv("JWT_SECRETKEY", "Thr")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
+
+		requestPayload := `{  "email": "cduffy@tfd.ie", "jwttoke": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/list/reports/0/10", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors(STATUS, logger)
+		//Hack to try to fake gorilla/mux vars
+		vars := map[string]string{
+			"lastobject": "test",
+		}
+		req = mux.SetURLVars(req, vars)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ListHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ListHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("ListHandler : should fail (force db error)", func(t *testing.T) {
+		var STATUS int = 500
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
 		requestPayload := `{  "email": "cduffy@tfd.ie", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/emails/234324", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-		//Hack to try to fake gorilla/mux vars
-		vars := map[string]string{
-			"key": "test",
-		}
-		req = mux.SetURLVars(req, vars)
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			EmailObjectHandler(w, r, conn)
-		})
-		handler.ServeHTTP(rr, req)
-		body, e := ioutil.ReadAll(rr.Body)
-		if e != nil {
-			t.Fatalf("Should not fail : found error %v", e)
-		}
-		logger.Trace(fmt.Sprintf("Response %s", string(body)))
-		// ignore errors here
-		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "EmailObjectHandler", rr.Code, STATUS))
-		}
-	})
-
-	t.Run("EmailObjectHandler : should fail (force GetObject error)", func(t *testing.T) {
-		var STATUS int = 500
-		os.Setenv("TOKEN", "1212121")
-		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
-
-		requestPayload := `{  "email": "cduffy@tfd.ie", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
-		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/emails/234324", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-		//Hack to try to fake gorilla/mux vars
-		vars := map[string]string{
-			"key": "test",
-		}
+		req, _ := http.NewRequest("POST", "/api/v1/list/reports/0/10", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors(STATUS, logger)
 		conn.Meta("true")
+		//Hack to try to fake gorilla/mux vars
+		vars := map[string]string{
+			"lastobject": "test",
+		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			EmailObjectHandler(w, r, conn)
+			ListHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -302,27 +186,26 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "EmailObjectHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ListHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("ReportObjectHandler : should pass (push)", func(t *testing.T) {
+	t.Run("ReportUpdateHandler : should pass", func(t *testing.T) {
 		var STATUS int = 200
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
-		requestPayload, _ := ioutil.ReadFile("../../tests/payload.json")
+		requestPayload := `{ "data": {"id":"test","servisbotstats":{"emailclassification":"test","processoutcome":"test","userclassification":"test","success": false}}, "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-		conn.SetMode("push")
+		req, _ := http.NewRequest("POST", "/api/v1/reports/", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
-			"key": "test",
+			"lastobject": "test",
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ReportObjectHandler(w, r, conn)
+			ReportUpdateHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -332,84 +215,25 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportObjectHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportUpdateHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("ReportObjectHandler : should pass (pull)", func(t *testing.T) {
-		var STATUS int = 200
-		os.Setenv("TOKEN", "1212121")
-		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
-
-		requestPayload := `{  "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
-		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors("../../tests/report-payload.json", STATUS, logger)
-		conn.SetMode("pull")
-		//Hack to try to fake gorilla/mux vars
-		vars := map[string]string{
-			"key": "test",
-		}
-		req = mux.SetURLVars(req, vars)
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ReportObjectHandler(w, r, conn)
-		})
-		handler.ServeHTTP(rr, req)
-		body, e := ioutil.ReadAll(rr.Body)
-		if e != nil {
-			t.Fatalf("Should not fail : found error %v", e)
-		}
-		logger.Trace(fmt.Sprintf("Response %s", string(body)))
-		// ignore errors here
-		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportObjectHandler", rr.Code, STATUS))
-		}
-	})
-
-	t.Run("ReportObjectHandler : should fail (force error readall)", func(t *testing.T) {
-		var STATUS int = 500
-		os.Setenv("TOKEN", "1212121")
-		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", errReader(0))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-		conn.SetMode("push")
-		//Hack to try to fake gorilla/mux vars
-		vars := map[string]string{
-			"key": "test",
-		}
-		req = mux.SetURLVars(req, vars)
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ReportObjectHandler(w, r, conn)
-		})
-		handler.ServeHTTP(rr, req)
-		body, e := ioutil.ReadAll(rr.Body)
-		if e != nil {
-			t.Fatalf("Should not fail : found error %v", e)
-		}
-		logger.Trace(fmt.Sprintf("Response %s", string(body)))
-		// ignore errors here
-		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportObjectHandler", rr.Code, STATUS))
-		}
-	})
-
-	t.Run("ReportObjectHandler : should fail (json data)", func(t *testing.T) {
+	t.Run("ReportUpdateHandler : should fail (force read body error)", func(t *testing.T) {
 		var STATUS int = 500
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
-		requestPayload := `{  data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-		conn.SetMode("push")
+		req, _ := http.NewRequest("POST", "/api/v1/reports/", errReader(0))
+		conn := connectors.NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
-			"key": "test",
+			"lastobject": "test",
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ReportObjectHandler(w, r, conn)
+			ReportUpdateHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -419,27 +243,55 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportObjectHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportUpdateHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("ReportObjectHandler : should fail (JWT)", func(t *testing.T) {
+	t.Run("ReportUpdateHandler : should fail (bad request json)", func(t *testing.T) {
+		var STATUS int = 500
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
+
+		requestPayload := `{ data": {"id":"test","servisbotstats":{"emailclassification":"test","processoutcome":"test","userclassification":"test","success": false}}, "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/reports/", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors(STATUS, logger)
+		//Hack to try to fake gorilla/mux vars
+		vars := map[string]string{
+			"lastobject": "test",
+		}
+		req = mux.SetURLVars(req, vars)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ReportUpdateHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportUpdateHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("ReportUpdateHandler : should fail (bad jwt token)", func(t *testing.T) {
 		var STATUS int = 403
 		os.Setenv("TOKEN", "1212121")
-		os.Setenv("JWT_SECRETKEY", "Thr")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
-		requestPayload, _ := ioutil.ReadFile("../../tests/payload.json")
+		requestPayload := `{ "data": {"id":"test","servisbotstats":{"emailclassification":"test","processoutcome":"test","userclassification":"test","success": false}}, "jwttoke": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-		conn.SetMode("push")
+		req, _ := http.NewRequest("POST", "/api/v1/reports/", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
-			"key": "test",
+			"lastobject": "test",
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ReportObjectHandler(w, r, conn)
+			ReportUpdateHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -449,28 +301,27 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportObjectHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportUpdateHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("ReportObjectHandler : should fail (force ReportObject error)", func(t *testing.T) {
+	t.Run("ReportUpdateHandler : should fail (force db error)", func(t *testing.T) {
 		var STATUS int = 500
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
-		requestPayload := `{  "data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		requestPayload := `{ "data": {"id":"test","servisbotstats":{"emailclassification":"test","processoutcome":"test","userclassification":"test","success": false}}, "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/reports/4324324324", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-		conn.SetMode("push")
-		//Hack to try to fake gorilla/mux vars
-		vars := map[string]string{
-			"key": "test",
-		}
+		req, _ := http.NewRequest("POST", "/api/v1/reports/", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors(STATUS, logger)
 		conn.Meta("true")
+		//Hack to try to fake gorilla/mux vars
+		vars := map[string]string{
+			"lastobject": "test",
+		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ReportObjectHandler(w, r, conn)
+			ReportUpdateHandler(w, r, conn)
 		})
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
@@ -480,117 +331,22 @@ func TestAllHandlers(t *testing.T) {
 		logger.Trace(fmt.Sprintf("Response %s", string(body)))
 		// ignore errors here
 		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportObjectHandler", rr.Code, STATUS))
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportUpdateHandler", rr.Code, STATUS))
 		}
 	})
 
-	t.Run("GetStatsHandler : should pass ", func(t *testing.T) {
+	t.Run("StatsHandler : should pass", func(t *testing.T) {
 		var STATUS int = 200
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
-		requestPayload := `{  "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		requestPayload := `{ "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/stats", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			GetStatsHandler(w, r, conn)
-		})
-		handler.ServeHTTP(rr, req)
-		body, e := ioutil.ReadAll(rr.Body)
-		if e != nil {
-			t.Fatalf("Should not fail : found error %v", e)
-		}
-		logger.Trace(fmt.Sprintf("Response %s", string(body)))
-		// ignore errors here
-		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "GetStatsHandler", rr.Code, STATUS))
-		}
-	})
-
-	t.Run("GetStatsHandler : should fail (force error readall)", func(t *testing.T) {
-		var STATUS int = 500
-		os.Setenv("TOKEN", "1212121")
-		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/stats", errReader(0))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			GetStatsHandler(w, r, conn)
-		})
-		handler.ServeHTTP(rr, req)
-		body, e := ioutil.ReadAll(rr.Body)
-		if e != nil {
-			t.Fatalf("Should not fail : found error %v", e)
-		}
-		logger.Trace(fmt.Sprintf("Response %s", string(body)))
-		// ignore errors here
-		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "GetStatsHandler", rr.Code, STATUS))
-		}
-	})
-
-	t.Run("GetStatsHandler : should fail (json data)", func(t *testing.T) {
-		var STATUS int = 500
-		os.Setenv("TOKEN", "1212121")
-		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
-
-		requestPayload := `{  data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
-		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/stats", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			GetStatsHandler(w, r, conn)
-		})
-		handler.ServeHTTP(rr, req)
-		body, e := ioutil.ReadAll(rr.Body)
-		if e != nil {
-			t.Fatalf("Should not fail : found error %v", e)
-		}
-		logger.Trace(fmt.Sprintf("Response %s", string(body)))
-		// ignore errors here
-		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "GetStatsHandler", rr.Code, STATUS))
-		}
-	})
-
-	t.Run("GetStatsHandler : should fail (JWT)", func(t *testing.T) {
-		var STATUS int = 403
-		os.Setenv("TOKEN", "1212121")
-		os.Setenv("JWT_SECRETKEY", "Thr")
-
-		requestPayload := `{  "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
-		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/stats", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			GetStatsHandler(w, r, conn)
-		})
-		handler.ServeHTTP(rr, req)
-		body, e := ioutil.ReadAll(rr.Body)
-		if e != nil {
-			t.Fatalf("Should not fail : found error %v", e)
-		}
-		logger.Trace(fmt.Sprintf("Response %s", string(body)))
-		// ignore errors here
-		if rr.Code != STATUS {
-			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "GetStatsHandler", rr.Code, STATUS))
-		}
-	})
-
-	t.Run("StatsHandler : should pass ", func(t *testing.T) {
-		var STATUS int = 200
-		os.Setenv("TOKEN", "1212121")
-		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
-		os.Setenv("TESTING", "true")
-
-		rr := httptest.NewRecorder()
-		req, _ := http.NewRequest("POST", "/api/v1/collect/stats/false", nil)
-		conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-
+		conn := connectors.NewTestConnectors(STATUS, logger)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			StatsHandler(w, r, conn)
 		})
-
 		handler.ServeHTTP(rr, req)
 		body, e := ioutil.ReadAll(rr.Body)
 		if e != nil {
@@ -602,35 +358,225 @@ func TestAllHandlers(t *testing.T) {
 			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "StatsHandler", rr.Code, STATUS))
 		}
 	})
-	/*
-		t.Run("StatsHandler : should fail (force list error) ", func(t *testing.T) {
-			var STATUS int = 500
-			os.Setenv("TOKEN", "1212121")
-			os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
-			var wg sync.WaitGroup
-			requestPayload := `{  "data": "{\"field\":\"value-cduffy@tfd.ie\"}", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
-			rr := httptest.NewRecorder()
-			req, _ := http.NewRequest("POST", "/api/v1/collect/stats/false", bytes.NewBuffer([]byte(requestPayload)))
-			conn := connectors.NewTestConnectors("../../tests/payload.json", STATUS, logger)
-			conn.Meta("true")
+	t.Run("StatsHandler : should fail (force read body errro)", func(t *testing.T) {
+		var STATUS int = 500
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
-			wg.Add(1)
-			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				StatsHandler(w, r, conn)
-			})
-			wg.Wait()
-
-			handler.ServeHTTP(rr, req)
-			body, e := ioutil.ReadAll(rr.Body)
-			if e != nil {
-				t.Fatalf("Should not fail : found error %v", e)
-			}
-			logger.Trace(fmt.Sprintf("Response %s", string(body)))
-			// ignore errors here
-			if rr.Code != STATUS {
-				t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "StatsHandler", rr.Code, STATUS))
-			}
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/stats", errReader(0))
+		conn := connectors.NewTestConnectors(STATUS, logger)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			StatsHandler(w, r, conn)
 		})
-	*/
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "StatsHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("StatsHandler : should fail (bad json request)", func(t *testing.T) {
+		var STATUS int = 500
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
+
+		requestPayload := `{ jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/stats", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors(STATUS, logger)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			StatsHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "StatsHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("StatsHandler : should fail (bad jwt token)", func(t *testing.T) {
+		var STATUS int = 403
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
+
+		requestPayload := `{ "jwttoke": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/stats", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors(STATUS, logger)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			StatsHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "StatsHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("StatsHandler : should fail (force db error)", func(t *testing.T) {
+		var STATUS int = 500
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
+
+		requestPayload := `{ "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/stats", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn.Meta("true")
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			StatsHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "StatsHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("ReportObjectHandler : should pass", func(t *testing.T) {
+		var STATUS int = 200
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
+
+		requestPayload := `{ "id":"13124","jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/s3bucket/report", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors(STATUS, logger)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ReportObjectHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "StatsHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("ReportObjectHandler : should fail (force error)", func(t *testing.T) {
+		var STATUS int = 500
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
+
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/s3bucket/report", errReader(0))
+		conn := connectors.NewTestConnectors(STATUS, logger)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ReportObjectHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportObjectHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("ReportObjectHandler : should fail (json)", func(t *testing.T) {
+		var STATUS int = 500
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
+
+		requestPayload := `{  email": "cduffy@tfd.ie", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/is3bucket/report", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors(STATUS, logger)
+		//Hack to try to fake gorilla/mux vars
+		vars := map[string]string{
+			"key": "test",
+		}
+		req = mux.SetURLVars(req, vars)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ReportObjectHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportObjectHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("ReportObjectHandler : should fail (jwt token)", func(t *testing.T) {
+		var STATUS int = 403
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr")
+
+		requestPayload := `{"id":"12345", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/s3bucket/report", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors(STATUS, logger)
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ReportObjectHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportObjectHandler", rr.Code, STATUS))
+		}
+	})
+
+	t.Run("ReportObjectHandler : should fail (force GetObject error)", func(t *testing.T) {
+		var STATUS int = 500
+		os.Setenv("TOKEN", "1212121")
+		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
+
+		requestPayload := `{  "id": "123456789", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		rr := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/api/v1/s3bucket/report", bytes.NewBuffer([]byte(requestPayload)))
+		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn.Meta("true")
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ReportObjectHandler(w, r, conn)
+		})
+		handler.ServeHTTP(rr, req)
+		body, e := ioutil.ReadAll(rr.Body)
+		if e != nil {
+			t.Fatalf("Should not fail : found error %v", e)
+		}
+		logger.Trace(fmt.Sprintf("Response %s", string(body)))
+		// ignore errors here
+		if rr.Code != STATUS {
+			t.Errorf(fmt.Sprintf("Handler %s returned with incorrect status code - got (%d) wanted (%d)", "ReportObjectHandler", rr.Code, STATUS))
+		}
+	})
 }

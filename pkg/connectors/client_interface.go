@@ -1,10 +1,9 @@
 package connectors
 
 import (
-	"net/http"
-
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/schema"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/newrelic/go-agent/v3/newrelic"
+	gocb "github.com/couchbase/gocb/v2"
 )
 
 // Client Interface - used as a receiver and can be overriden for testing
@@ -14,12 +13,8 @@ type Clients interface {
 	Debug(string, ...interface{})
 	Trace(string, ...interface{})
 	Meta(string) string
-	SetMode(string)
-	GetMode() string
-	Do(req *http.Request) (*http.Response, error)
-	ListObjectsV2(in *s3.ListObjectsV2Input) (*s3.ListObjectsV2Output, error)
-	GetObject(in *s3.GetObjectInput) ([]byte, error)
-	PutObject(in *s3.PutObjectInput) (*string, error)
-	// new relic
-	StartTransaction(name string) *newrelic.Transaction
+	GetAllStats() ([]schema.Stat, error)
+	GetList(string, string) ([]schema.ReportList, error)
+	Upsert(uuid string, value interface{}, opts *gocb.UpsertOptions) (*gocb.MutationResult, error)
+	GetObject(in *s3.GetObjectInput) (*schema.ReportContent, error)
 }

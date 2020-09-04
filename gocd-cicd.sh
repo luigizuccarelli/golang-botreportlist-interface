@@ -3,9 +3,9 @@
 # All parameter fields are required for the script to execute
 
 # declare some variables
-PROJECT="servisbot-s3bucket-manager"
-jobname="kaniko-servisbot-s3bucket-manager"
-deploymentconfig="servisbot-s3bucket-manager"
+PROJECT="servisbot-reportlist-interface"
+jobname="kaniko-servisbot-reportlist-interface"
+deploymentconfig="servisbot-reportlist-interface"
 namespace="trackmate-pilot"
 
 

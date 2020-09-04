@@ -1,6 +1,6 @@
 {
   "name": "dev",
   "pipelines": [
-    "servisbot-s3bucket-manager"
+    "servisbot-reportlist-interface"
   ]
 }

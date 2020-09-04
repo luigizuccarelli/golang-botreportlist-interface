@@ -1,0 +1,29 @@
+[
+  {
+    "id": "096esbpfrk8b3nhdlfhditsmk10gj03g06i3c201.json",
+    "servisbotstats": {
+      "EmailClassification": "Cancel",
+      "ProcessOutcome": "No Action",
+      "UserClassification": "",
+      "success": false
+    }
+  },
+  {
+    "id": "0j1bhi73m6geu5eupklnf1qsqgqnrn9oedcclt01.json",
+    "servisbotstats": {
+      "EmailClassification": "Cancel",
+      "ProcessOutcome": "No Action",
+      "UserClassification": "",
+      "success": false
+    }
+  },
+  {
+    "id": "pq5bhi73m6geu5eupklnf1qsqgqnrn9oedcclt01.json_copy",
+    "servisbotstats": {
+      "EmailClassification": "Cancel",
+      "ProcessOutcome": "No Action",
+      "UserClassification": "No Action",
+      "success": true
+    }
+  }
+]

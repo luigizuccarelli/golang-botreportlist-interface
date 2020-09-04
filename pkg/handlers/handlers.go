@@ -8,14 +8,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
-	"sync"
-	"time"
 
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/connectors"
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/schema"
-	"github.com/aws/aws-sdk-go/aws"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/schema"
 	"github.com/aws/aws-sdk-go/service/s3"
+	gocb "github.com/couchbase/gocb/v2"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 )
@@ -30,19 +27,11 @@ const (
 	EMAIL           string = "Email"
 )
 
-// ListBucketHandler - handler that interfaces with s3 bucket
-func ListBucketHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
-	var in *s3.ListObjectsV2Input
-	var files []schema.S3FileMetaData
+// ListHandler - handler that returns servisBOT accuracy
+func ListHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
 	var servisbotRequest *schema.ServisBOTRequest
 	vars := mux.Vars(r)
-
-	txn := con.StartTransaction("ListBucketHandler")
-	defer txn.End()
-	// req is a *http.Request, this marks the transaction as a web transaction
-	txn.SetWebRequestHTTP(r)
-	writer := txn.SetWebResponse(w)
-	addHeaders(writer, r)
+	addHeaders(w, r)
 
 	// read the jwt token data in the body
 	// we don't use authorization header as the token can get quite large due to form data
@@ -52,72 +41,54 @@ func ListBucketHandler(w http.ResponseWriter, r *http.Request, con connectors.Cl
 	}
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		msg := "Body data (JWT) %v"
-		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, err)
-		fmt.Fprintf(writer, string(b))
+		msg := "ListHandler body data error : access forbidden %v"
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+		fmt.Fprintf(w, string(b))
 		return
 	}
 
-	con.Trace("Request body : %s", string(body))
+	con.Trace("ListHandler request body : %s", string(body))
 
-	// unmarshal result from mw backend
 	errs := json.Unmarshal(body, &servisbotRequest)
 	if errs != nil {
-		msg := "GenericHandler could not unmarshal input data from servisBOT to schema %v"
+		msg := "ListHandler could not unmarshal input data from servisBOT to schema %v"
 		con.Error(msg, errs)
-		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, errs)
-		fmt.Fprintf(writer, string(b))
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
+		fmt.Fprintf(w, string(b))
 		return
 	}
 
 	// check the jwt token
 	_, err = verifyJwtToken(servisbotRequest.JwtToken)
 	if err != nil {
-		msg := "ListBucketHandler verifyToken  %v"
+		msg := "ListHandler verifyToken  %v"
 		con.Error(msg, err)
-		b := responseErrorFormat(http.StatusForbidden, writer, msg, err)
-		fmt.Fprintf(writer, string(b))
+		b := responseErrorFormat(http.StatusForbidden, w, msg, err)
+		fmt.Fprintf(w, string(b))
 		return
 	}
 
-	bucket := os.Getenv(AWSREPORTBUCKET)
-
-	// Get the list of items
-	if vars["lastobject"] != "" && vars["lastobject"] != "false" {
-		in = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL), StartAfter: aws.String(vars["lastobject"])}
-	} else {
-		in = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL)}
-	}
-
-	resp, err := con.ListObjectsV2(in)
+	// update the database
+	res, err := con.GetList(vars["offset"], vars["limit"])
 	if err != nil {
-		con.Error("Unable to list items in bucket %q, %v", bucket, err)
+		msg := "ListHandler (get) couchbase  %v"
+		con.Error(msg, err)
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+		fmt.Fprintf(w, string(b))
+		return
 	}
 
-	for _, item := range resp.Contents {
-		file := &schema.S3FileMetaData{Name: *item.Key, LastModified: *item.LastModified, Size: *item.Size, StorageClass: *item.StorageClass}
-		files = append(files, *file)
-	}
-	con.Trace("ListBucketHandler found %d items in bucket %s", len(resp.Contents), bucket)
-	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: "ListBucketHandler s3 object call successful", Payload: files}
+	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: "ListHandler retrieved data successfully ", Reports: res}
 	w.WriteHeader(http.StatusOK)
 	b, _ := json.MarshalIndent(response, "", "	")
-	fmt.Fprintf(writer, string(b))
+	fmt.Fprintf(w, string(b))
 	return
 }
 
-// EmailObjectHandler - handler that interfaces with s3 bucket
-func EmailObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
+// ReportUpdateHandler - handler that returns servisBOT accuracy
+func ReportUpdateHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
 	var servisbotRequest *schema.ServisBOTRequest
-
-	bucket := os.Getenv(AWSBUCKET)
-	vars := mux.Vars(r)
-	txn := con.StartTransaction("EmailObjectHandler")
-	defer txn.End()
-	// req is a *http.Request, this marks the transaction as a web transaction
-	txn.SetWebRequestHTTP(r)
-	writer := txn.SetWebResponse(w)
-	addHeaders(writer, r)
+	addHeaders(w, r)
 
 	// read the jwt token data in the body
 	// we don't use authorization header as the token can get quite large due to form data
@@ -127,68 +98,114 @@ func EmailObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.C
 	}
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		msg := "EmailObjectHandler body data %v"
-		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, err)
-		fmt.Fprintf(writer, string(b))
+		msg := "ReportUpdateHandler body data error : %v"
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+		fmt.Fprintf(w, string(b))
 		return
 	}
 
-	con.Trace("EmailObjectHandler request body : %s", string(body))
+	con.Trace(" ReportUpdateHandler request body : %s", string(body))
 
-	// unmarshal result from mw backend
 	errs := json.Unmarshal(body, &servisbotRequest)
 	if errs != nil {
-		msg := "EmailObjectHandler could not unmarshal input data from servisBOT to schema %v"
+		msg := "ReportUpdateHandler could not unmarshal input data from servisBOT to schema %v"
 		con.Error(msg, errs)
-		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, errs)
-		fmt.Fprintf(writer, string(b))
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
+		fmt.Fprintf(w, string(b))
 		return
 	}
 
 	// check the jwt token
 	_, err = verifyJwtToken(servisbotRequest.JwtToken)
 	if err != nil {
-		msg := "EmailObjectHandler verifyToken  %v"
+		msg := "ReportUpdateHandler verifyToken  %v"
 		con.Error(msg, err)
-		b := responseErrorFormat(http.StatusForbidden, writer, msg, err)
-		fmt.Fprintf(writer, string(b))
+		b := responseErrorFormat(http.StatusForbidden, w, msg, err)
+		fmt.Fprintf(w, string(b))
 		return
 	}
 
-	filename := vars["key"]
-	opts := &s3.GetObjectInput{Bucket: &bucket, Key: &filename}
-	data, e := con.GetObject(opts)
-	if e != nil {
-		msg := "EmailObjectHandler %v"
-		con.Error(msg, e)
-		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, errs)
-		fmt.Fprintf(writer, string(b))
+	// update the database
+	res, err := con.Upsert(servisbotRequest.Data.Id, servisbotRequest.Data.ServisbotStats, &gocb.UpsertOptions{})
+	if err != nil {
+		msg := "ReportUpdateHandler (post) couchbase  %v"
+		con.Error(msg, err)
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+		fmt.Fprintf(w, string(b))
 		return
 	}
 
-	con.Trace("EmailObjectHandler data %s", string(data))
-	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: "EmailObjectHandler s3 object call successful", Email: string(data)}
-	writer.WriteHeader(http.StatusOK)
+	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: fmt.Sprintf("ReportUpdateHandler posted data successfully %v", res)}
+	w.WriteHeader(http.StatusOK)
 	b, _ := json.MarshalIndent(response, "", "	")
-	fmt.Fprintf(writer, string(b))
+	fmt.Fprintf(w, string(b))
+	return
+}
+
+// StatsHandler - handler that returns servisBOT accuracy
+func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
+	var servisbotRequest *schema.ServisBOTRequest
+	addHeaders(w, r)
+
+	// read the jwt token data in the body
+	// we don't use authorization header as the token can get quite large due to form data
+	// ensure we don't have nil - it will cause a null pointer exception
+	if r.Body == nil {
+		r.Body = ioutil.NopCloser(bytes.NewBufferString(""))
+	}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		msg := "StatsHandler body data error : %v"
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+		fmt.Fprintf(w, string(b))
+		return
+	}
+
+	con.Trace("StatsHandler request body : %s", string(body))
+
+	errs := json.Unmarshal(body, &servisbotRequest)
+	if errs != nil {
+		msg := "StatsHandler could not unmarshal input data from servisBOT to schema %v"
+		con.Error(msg, errs)
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
+		fmt.Fprintf(w, string(b))
+		return
+	}
+
+	// check the jwt token
+	_, err = verifyJwtToken(servisbotRequest.JwtToken)
+	if err != nil {
+		msg := "StatsHandler verifyToken  %v"
+		con.Error(msg, err)
+		b := responseErrorFormat(http.StatusForbidden, w, msg, err)
+		fmt.Fprintf(w, string(b))
+		return
+	}
+
+	// get the stats data from couchbase
+	res, err := con.GetAllStats()
+	if err != nil {
+		msg := "StatsHandler (post) couchbase  %v"
+		con.Error(msg, err)
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+		fmt.Fprintf(w, string(b))
+		return
+	}
+
+	response := &schema.StatsResponse{Code: http.StatusOK, Status: "OK", Message: "StatsHandler retrieved data successfully", Stats: res}
+	w.WriteHeader(http.StatusOK)
+	b, _ := json.MarshalIndent(response, "", "	")
+	fmt.Fprintf(w, string(b))
 	return
 }
 
 // ReportObjectHandler - handler that interfaces with s3 bucket
 func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
 	var servisbotRequest *schema.ServisBOTRequest
-	var response *schema.Response
-	var report *schema.ReportContent
 
-	bucket := os.Getenv(AWSREPORTBUCKET)
+	bucket := os.Getenv(AWSBUCKET)
 	vars := mux.Vars(r)
-
-	txn := con.StartTransaction("ReportObjectHandler")
-	defer txn.End()
-	// req is a *http.Request, this marks the transaction as a web transaction
-	txn.SetWebRequestHTTP(r)
-	writer := txn.SetWebResponse(w)
-	addHeaders(writer, r)
+	addHeaders(w, r)
 
 	// read the jwt token data in the body
 	// we don't use authorization header as the token can get quite large due to form data
@@ -198,9 +215,9 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
 	}
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		msg := "ReportObjectHandler body data error : access forbidden %v"
-		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, err)
-		fmt.Fprintf(writer, string(b))
+		msg := "ReportObjectHandler body data %v"
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+		fmt.Fprintf(w, string(b))
 		return
 	}
 
@@ -211,8 +228,8 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
 	if errs != nil {
 		msg := "ReportObjectHandler could not unmarshal input data from servisBOT to schema %v"
 		con.Error(msg, errs)
-		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, errs)
-		fmt.Fprintf(writer, string(b))
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
+		fmt.Fprintf(w, string(b))
 		return
 	}
 
@@ -221,284 +238,31 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
 	if err != nil {
 		msg := "ReportObjectHandler verifyToken  %v"
 		con.Error(msg, err)
-		b := responseErrorFormat(http.StatusForbidden, writer, msg, err)
-		fmt.Fprintf(writer, string(b))
+		b := responseErrorFormat(http.StatusForbidden, w, msg, err)
+		fmt.Fprintf(w, string(b))
 		return
 	}
 
-	// check for request method
-	filename := CHANNEL + vars["key"]
-	if con.GetMode() == "pull" {
-		opts := &s3.GetObjectInput{Bucket: &bucket, Key: &filename}
-		res, er := con.GetObject(opts)
-		if er != nil {
-			msg := "ReportObjectHandler %v"
-			con.Error(msg, er)
-			b := responseErrorFormat(http.StatusInternalServerError, writer, msg, er)
-			fmt.Fprintf(writer, string(b))
-			return
-		}
-		// unmarshal result
-		err := json.Unmarshal(res, &report)
-		if err != nil {
-			msg := "ReportObjectHandler (pull)  unmarshalling data to schema %v"
-			con.Error(msg, err)
-			b := responseErrorFormat(http.StatusInternalServerError, writer, msg, err)
-			fmt.Fprintf(writer, string(b))
-			return
-		}
-		con.Trace("ReportObjectHandler (get) data %s", string(res))
-		response = &schema.Response{Code: http.StatusOK, Status: "OK", Message: "ReportObjectHandler s3 object call (get) successful", Report: report}
-	} else {
-		// This is s POST
-		// we now need to marshal
-		//var rc *schema.ReportContent
-		b, err := json.MarshalIndent(servisbotRequest.Data, "", " ")
-		if err != nil {
-			msg := "ReportObjectHandler (post) marshalling data %v"
-			con.Error(msg, err)
-			b := responseErrorFormat(http.StatusInternalServerError, writer, msg, err)
-			fmt.Fprintf(writer, string(b))
-			return
-		}
-		opts := &s3.PutObjectInput{Bucket: &bucket, Key: &filename, Body: aws.ReadSeekCloser(strings.NewReader(string(b)))}
-		res, e := con.PutObject(opts)
-		if e != nil {
-			msg := "ReportObjectHandler %v"
-			con.Error(msg, e)
-			b := responseErrorFormat(http.StatusInternalServerError, writer, msg, e)
-			fmt.Fprintf(writer, string(b))
-			return
-		}
-		con.Trace("ReportObjectHandler (post) data %s", *res)
-		response = &schema.Response{Code: http.StatusOK, Status: "OK", Message: "ReportObjectHandler s3 object call (post) successful"}
-	}
-
-	writer.WriteHeader(http.StatusOK)
-	b, _ := json.MarshalIndent(response, "", "	")
-	fmt.Fprintf(writer, string(b))
-	return
-}
-
-// GetStatsHandler - handler that returns servisBOT accuracy
-func GetStatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
-	var servisbotRequest *schema.ServisBOTRequest
-
-	txn := con.StartTransaction("GetStatsHandler")
-	defer txn.End()
-	// req is a *http.Request, this marks the transaction as a web transaction
-	txn.SetWebRequestHTTP(r)
-	writer := txn.SetWebResponse(w)
-	addHeaders(writer, r)
-
-	// read the jwt token data in the body
-	// we don't use authorization header as the token can get quite large due to form data
-	// ensure we don't have nil - it will cause a null pointer exception
-	if r.Body == nil {
-		r.Body = ioutil.NopCloser(bytes.NewBufferString(""))
-	}
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		msg := "GetStatsHandler body data %v"
-		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, err)
-		fmt.Fprintf(writer, string(b))
-		return
-	}
-
-	con.Trace("GetStatsHandler request body : %s", string(body))
-
-	// unmarshal result from mw backend
-	errs := json.Unmarshal(body, &servisbotRequest)
-	if errs != nil {
-		msg := "GetStatsHandler could not unmarshal input data from servisBOT to schema %v"
-		con.Error(msg, errs)
-		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, errs)
-		fmt.Fprintf(writer, string(b))
-		return
-	}
-
-	// check the jwt token
-	_, err = verifyJwtToken(servisbotRequest.JwtToken)
-	if err != nil {
-		msg := "GetStatsHandler verifyToken  %v"
-		con.Error(msg, err)
-		b := responseErrorFormat(http.StatusForbidden, writer, msg, err)
-		fmt.Fprintf(writer, string(b))
-		return
-	}
-
-	bucket := os.Getenv(AWSREPORTBUCKET)
-	filename := "Stats/stats.json"
+	filename := vars["key"]
 	opts := &s3.GetObjectInput{Bucket: &bucket, Key: &filename}
-	res, er := con.GetObject(opts)
-	if er != nil {
-		msg := "GetStatsHandler reading stats  %v"
-		con.Error(msg, er)
-		b := responseErrorFormat(http.StatusInternalServerError, writer, msg, er)
-		fmt.Fprintf(writer, string(b))
+	data, e := con.GetObject(opts)
+	if e != nil {
+		msg := "ReportObjectHandler %v"
+		con.Error(msg, e)
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
+		fmt.Fprintf(w, string(b))
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(writer, string(res))
-	return
-}
-
-// StatsHandler - handler that interfaces with s3 bucket
-func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
-	var stats *schema.Stats
-	var listOpts *s3.ListObjectsV2Input
-
-	vars := mux.Vars(r)
-	bucket := os.Getenv(AWSREPORTBUCKET)
-	txn := con.StartTransaction("StatsHandler")
-	defer txn.End()
-	// req is a *http.Request, this marks the transaction as a web transaction
-	txn.SetWebRequestHTTP(r)
-	writer := txn.SetWebResponse(w)
-	addHeaders(writer, r)
-
-	// we don't need to worry about jwt
-	if vars["init"] != "" && vars["init"] == "true" {
-		con.Trace("StatsHandler init set to true - starting re-run")
-		// re-run from the first record
-		listOpts = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL)}
-	} else {
-		// Get the list of items
-		// Check if we have a lastobject item
-		con.Trace("StatsHandler init not set")
-		filename := "Stats/stats.json"
-		opts := &s3.GetObjectInput{Bucket: &bucket, Key: &filename}
-		res, _ := con.GetObject(opts)
-		// update our schema
-		err := json.Unmarshal([]byte(res), &stats)
-		if err != nil {
-			stats = &schema.Stats{}
-			con.Error("StatsHandler converting json %v", err)
-		}
-		if stats.LastObject != "" {
-			listOpts = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL), StartAfter: aws.String(stats.LastObject)}
-		} else {
-			listOpts = &s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL)}
-		}
-	}
-
-	var wg sync.WaitGroup
-	if os.Getenv("TESTING") != "" && os.Getenv("TESTING") == "true" {
-		wg.Add(1)
-	}
-
-	go calculateStats(con, listOpts, &wg)
-
-	if os.Getenv("TESTING") != "" && os.Getenv("TESTING") == "true" {
-		wg.Wait()
-	}
-
-	response := &schema.Response{Code: http.StatusOK, Status: "OK", Message: fmt.Sprintf("StatsHandler process started in background - check timestamp %d", time.Now().Unix())}
+	con.Trace("ReportObjectHandler data %v", data)
+	response := &schema.ReportResponse{Code: http.StatusOK, Status: "OK", Message: "ReportObjectHandler s3 object call successful", Report: *data}
 	w.WriteHeader(http.StatusOK)
 	b, _ := json.MarshalIndent(response, "", "	")
-	fmt.Fprintf(writer, string(b))
+	fmt.Fprintf(w, string(b))
 	return
 }
 
-func calculateStats(con connectors.Clients, listOpts *s3.ListObjectsV2Input, wg *sync.WaitGroup) error {
-
-	if os.Getenv("TESTING") != "" && os.Getenv("TESTING") == "true" {
-		defer wg.Done()
-	}
-	con.Trace("Function getStats opts %v", listOpts)
-	bucket := os.Getenv(AWSREPORTBUCKET)
-	resp, err := con.ListObjectsV2(listOpts)
-	if err != nil {
-		msg := "Function calculateStats unable to list items in bucket %q, %v"
-		con.Error(msg, bucket, err)
-		return err
-	}
-
-	var name string = ""
-	var count float64 = 0.0
-	var accuracy float64 = 0.0
-
-	con.Trace("Function calculateStats listObjects count %d", len(resp.Contents))
-	for _, item := range resp.Contents {
-		name = *item.Key
-		count++
-		accuracy = accuracy + getObject(con, bucket, name)
-	}
-
-	// check for more objects in the bucket
-	//if *resp.IsTruncated {
-	for {
-		resp, err = con.ListObjectsV2(&s3.ListObjectsV2Input{Bucket: aws.String(bucket), Prefix: aws.String(EMAIL), StartAfter: aws.String(name)})
-		if err != nil {
-			msg := "Function calculateStats unable to list items in bucket %q, %v"
-			con.Error(msg, bucket, err)
-			return err
-		}
-		con.Trace("Function calculateStats listObjects (second loop) count %d", len(resp.Contents))
-		for _, item := range resp.Contents {
-			name = *item.Key
-			count++
-			accuracy = accuracy + getObject(con, bucket, name)
-		}
-		if !*resp.IsTruncated {
-			break
-		}
-	}
-	//}
-
-	con.Trace("Function calculateStats last object %s", name)
-	con.Trace("Function calculateStats found %f items in bucket %s", count, bucket)
-	con.Trace("Function calculateStats success items in bucket %f", accuracy)
-	con.Trace("Function calculateStats bot accuracy %f", accuracy)
-	s := &schema.Stats{RecordCount: count, SuccessCount: accuracy, Accuracy: (accuracy / count), LastObject: name, LastUpdated: time.Now().Unix()}
-	con.Trace("Function calculateStats struct %v", s)
-	b, _ := json.MarshalIndent(s, "", "	")
-	filename := "Stats/stats.json"
-	// store to s3
-	opts := &s3.PutObjectInput{Bucket: &bucket, Key: &filename, Body: aws.ReadSeekCloser(strings.NewReader(string(b)))}
-	_, e := con.PutObject(opts)
-	if e != nil {
-		msg := "Function calculateStats putobject %v"
-		con.Error(msg, e)
-		return e
-	}
-	con.Trace("Function calculateStats putobject succeeded %s", string(b))
-	// all good
-	return nil
-}
-
-func getObject(con connectors.Clients, bucket string, key string) float64 {
-	var rc *schema.ReportContent
-	const MSG string = "Function getObject %v"
-
-	input := &s3.GetObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-	}
-
-	result, err := con.GetObject(input)
-	if err != nil {
-		con.Error(MSG, err)
-		return 0.0
-	}
-
-	// unmarshal result from mw backend
-	errs := json.Unmarshal([]byte(result), &rc)
-	if errs != nil {
-		con.Error(MSG+" unmarshalling data to schema", errs)
-		return 0.0
-	}
-
-	if rc.Success {
-		return 1.0
-	} else {
-		return 0.0
-	}
-
-	return 0.0
-}
-
+// IsAlive - readiness & liveliness probe
 func IsAlive(w http.ResponseWriter, r *http.Request) {
 	// add header (cors) override for vuejs FE
 	addHeaders(w, r)

@@ -16,5 +16,16 @@
     "UserClassification":[
       "Cancel"
     ],
-    "success":true
+    "success":true,
+    "CustomerInfo": {
+      "CustomerNumber": "customerNumber",
+	    "ExpirationDate":  "expirationDate",
+	    "IssuesRemaining": "issuesRemaining",
+	    "CircStatus":      "circStatus",
+	    "RenewalFlag":     "renewalFlag",
+	    "ProductFamily":   "productFamily",
+	    "PubCode":         "pubcode",
+	    "SubRef":          "subref",
+	    "Message":         "message"
+    }
 }

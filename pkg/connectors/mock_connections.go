@@ -1,16 +1,16 @@
 package connectors
 
 import (
-	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"time"
 
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/schema"
 	"github.com/aws/aws-sdk-go/service/s3"
+	gocb "github.com/couchbase/gocb/v2"
 	"github.com/microlib/simple"
-	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 var count int = 0
@@ -20,9 +20,7 @@ type FakeS3 struct {
 
 // Mock all connections
 type MockConnectors struct {
-	NewRelic  *newrelic.Application
 	S3Service *FakeS3
-	Http      *http.Client
 	Logger    *simple.Logger
 	Flag      string
 	Mode      string
@@ -54,22 +52,12 @@ func (c *MockConnectors) Meta(flag string) string {
 	return flag
 }
 
-// SetMode - simple push pull flag setting
-func (c *MockConnectors) SetMode(mode string) {
-	c.Mode = mode
-}
-
-// GetMode - simple flag check routine
-func (c *MockConnectors) GetMode() string {
-	return c.Mode
-}
-
-// Do - log
-func (c *MockConnectors) Do(req *http.Request) (*http.Response, error) {
+// Upsert : wrapper function for couchbase update
+func (c *MockConnectors) Upsert(uuid string, value interface{}, opts *gocb.UpsertOptions) (*gocb.MutationResult, error) {
 	if c.Flag == "true" {
-		return nil, errors.New("forced http error")
+		return &gocb.MutationResult{}, errors.New("Upsert (forced error)")
 	}
-	return c.Http.Do(req)
+	return &gocb.MutationResult{}, nil
 }
 
 // ListObjectsV2 - S3 wrapper
@@ -100,14 +88,39 @@ func (c *MockConnectors) ListObjectsV2(in *s3.ListObjectsV2Input) (*s3.ListObjec
 	return s, nil
 }
 
-// GetObject - S3 Object download wrapper
-func (c *MockConnectors) GetObject(opts *s3.GetObjectInput) ([]byte, error) {
-	var b []byte
+// GetList - Couchbase list wrapper
+func (c *MockConnectors) GetList(offset string, limit string) ([]schema.ReportList, error) {
+	var list []schema.ReportList
 	if c.Flag == "true" {
-		return b, errors.New("forced s3 ListObjectsV2 error")
+		return list, errors.New("forced GetList (DB) error")
 	}
-	b, _ = ioutil.ReadFile("../../tests/report-payload.json")
-	return b, nil
+	b, _ := ioutil.ReadFile("../../tests/payload-reportlist-01.json")
+	c.Trace("GetList mock response %s", string(b))
+	json.Unmarshal(b, &list)
+	return list, nil
+}
+
+// GetAllStats - Couchbase stats wrapper
+func (c *MockConnectors) GetAllStats() ([]schema.Stat, error) {
+	var stats []schema.Stat
+	if c.Flag == "true" {
+		return stats, errors.New("forced GetAllStats (DB) error")
+	}
+	b, _ := ioutil.ReadFile("../../tests/payload-stats.json")
+	c.Trace("GetAllStats mock response %s", string(b))
+	json.Unmarshal(b, &stats)
+	return stats, nil
+}
+
+// GetObject - S3 Object download wrapper
+func (c *MockConnectors) GetObject(opts *s3.GetObjectInput) (*schema.ReportContent, error) {
+	var rc *schema.ReportContent
+	if c.Flag == "true" {
+		return rc, errors.New("forced s3 ListObjectsV2 error")
+	}
+	b, _ := ioutil.ReadFile("../../tests/report-payload.json")
+	json.Unmarshal(b, &rc)
+	return rc, nil
 }
 
 // PutObject - S3 Object uploader wrapper
@@ -120,52 +133,8 @@ func (c *MockConnectors) PutObject(opts *s3.PutObjectInput) (*string, error) {
 	return &s, nil
 }
 
-// RoundTripFunc .
-type RoundTripFunc func(req *http.Request) *http.Response
-
-// RoundTrip .
-func (f RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f(req), nil
-}
-
-//NewTestClient returns *http.Client with Transport replaced to avoid making real calls
-func NewHttpTestClient(fn RoundTripFunc) *http.Client {
-	return &http.Client{
-		Transport: RoundTripFunc(fn),
-	}
-}
-
-// StartTransaction - wrapper for new relic
-func (c *MockConnectors) StartTransaction(name string) *newrelic.Transaction {
-	return c.NewRelic.StartTransaction(name)
-}
-
 // NewTestConnector - creates all test connectors
-func NewTestConnectors(file string, code int, logger *simple.Logger) Clients {
-
-	// we first load the json payload to simulate a call to middleware
-	// for now just ignore failures.
-	data, err := ioutil.ReadFile(file)
-	if err != nil {
-		logger.Error(fmt.Sprintf("file data %v\n", err))
-		panic(err)
-	}
-	httpclient := NewHttpTestClient(func(req *http.Request) *http.Response {
-		return &http.Response{
-			StatusCode: code,
-			// Send response to be tested
-
-			Body: ioutil.NopCloser(bytes.NewBufferString(string(data))),
-			// Must be set to non-nil value or it panics
-			Header: make(http.Header),
-		}
-	})
-
-	nr, err := newrelic.NewApplication(
-		newrelic.ConfigAppName("ServisBOT-TEST"),
-		newrelic.ConfigLicense("9b2cc6e8631b12bf6d7800434535e0e45568NRAL"),
-	)
-
-	conns := &MockConnectors{NewRelic: nr, S3Service: &FakeS3{}, Http: httpclient, Logger: logger, Flag: "false"}
+func NewTestConnectors(code int, logger *simple.Logger) Clients {
+	conns := &MockConnectors{Logger: logger, Flag: "false"}
 	return conns
 }

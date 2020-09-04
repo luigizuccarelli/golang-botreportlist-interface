@@ -6,9 +6,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/connectors"
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/handlers"
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-s3bucket-manager/pkg/validator"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/handlers"
+	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/validator"
 	"github.com/gorilla/mux"
 	"github.com/microlib/simple"
 	"github.com/prometheus/client_golang/prometheus"
@@ -54,30 +54,20 @@ func startHttpServer(con connectors.Clients) *http.Server {
 	r.Use(prometheusMiddleware)
 	r.Path("/api/v2/metrics").Handler(promhttp.Handler())
 
-	r.HandleFunc("/api/v1/list/reports/{lastobject}", func(w http.ResponseWriter, req *http.Request) {
-		handlers.ListBucketHandler(w, req, con)
+	r.HandleFunc("/api/v1/list/reports/{from}/{to}", func(w http.ResponseWriter, req *http.Request) {
+		handlers.ListHandler(w, req, con)
 	}).Methods("POST", "OPTIONS")
 
-	r.HandleFunc("/api/v1/emails/{key}", func(w http.ResponseWriter, req *http.Request) {
-		handlers.EmailObjectHandler(w, req, con)
-	}).Methods("POST", "OPTIONS")
-
-	r.HandleFunc("/api/v1/push/reports/{key}", func(w http.ResponseWriter, req *http.Request) {
-		con.SetMode("push")
-		handlers.ReportObjectHandler(w, req, con)
-	}).Methods("POST", "OPTIONS")
-
-	r.HandleFunc("/api/v1/pull/reports/{key}", func(w http.ResponseWriter, req *http.Request) {
-		con.SetMode("pull")
-		handlers.ReportObjectHandler(w, req, con)
+	r.HandleFunc("/api/v1/reports", func(w http.ResponseWriter, req *http.Request) {
+		handlers.ReportUpdateHandler(w, req, con)
 	}).Methods("POST", "OPTIONS")
 
 	r.HandleFunc("/api/v1/stats", func(w http.ResponseWriter, req *http.Request) {
-		handlers.GetStatsHandler(w, req, con)
+		handlers.StatsHandler(w, req, con)
 	}).Methods("POST", "OPTIONS")
 
-	r.HandleFunc("/api/v1/collect/stats/{init}", func(w http.ResponseWriter, req *http.Request) {
-		handlers.StatsHandler(w, req, con)
+	r.HandleFunc("/api/v1/s3bucket/report", func(w http.ResponseWriter, req *http.Request) {
+		handlers.ReportObjectHandler(w, req, con)
 	}).Methods("POST", "OPTIONS")
 
 	r.HandleFunc("/api/v2/sys/info/isalive", handlers.IsAlive).Methods("GET")
