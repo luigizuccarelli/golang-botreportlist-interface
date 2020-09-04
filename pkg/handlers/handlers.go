@@ -69,7 +69,7 @@ func ListHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients)
 	}
 
 	// update the database
-	res, err := con.GetList(vars["offset"], vars["limit"])
+	res, err := con.GetList(vars["from"], vars["to"])
 	if err != nil {
 		msg := "ListHandler (get) couchbase  %v"
 		con.Error(msg, err)

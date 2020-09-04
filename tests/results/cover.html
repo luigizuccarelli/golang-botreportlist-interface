@@ -141,7 +141,7 @@ func ListHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients)
         }</span>
 
         // update the database
-        <span class="cov8" title="1">res, err := con.GetList(vars["offset"], vars["limit"])
+        <span class="cov8" title="1">res, err := con.GetList(vars["from"], vars["to"])
         if err != nil </span><span class="cov8" title="1">{
                 msg := "ListHandler (get) couchbase  %v"
                 con.Error(msg, err)
