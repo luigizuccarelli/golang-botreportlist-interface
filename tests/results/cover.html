@@ -276,7 +276,6 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
         var servisbotRequest *schema.ServisBOTRequest
 
         bucket := os.Getenv(AWSBUCKET)
-        vars := mux.Vars(r)
         addHeaders(w, r)
 
         // read the jwt token data in the body
@@ -315,8 +314,8 @@ func ReportObjectHandler(w http.ResponseWriter, r *http.Request, con connectors.
                 return
         }</span>
 
-        <span class="cov8" title="1">filename := vars["key"]
-        opts := &amp;s3.GetObjectInput{Bucket: &amp;bucket, Key: &amp;filename}
+        <span class="cov8" title="1">key := servisbotRequest.Data.Id
+        opts := &amp;s3.GetObjectInput{Bucket: &amp;bucket, Key: &amp;key}
         data, e := con.GetObject(opts)
         if e != nil </span><span class="cov8" title="1">{
                 msg := "ReportObjectHandler %v"

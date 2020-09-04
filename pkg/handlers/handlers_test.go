@@ -460,7 +460,7 @@ func TestAllHandlers(t *testing.T) {
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
-		requestPayload := `{ "id":"13124","jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		requestPayload := `{ "data": {"id":"13124"},"jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/s3bucket/report", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors(STATUS, logger)
@@ -536,7 +536,7 @@ func TestAllHandlers(t *testing.T) {
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr")
 
-		requestPayload := `{"id":"12345", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		requestPayload := `{"data": {"id":"13124"}, "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/s3bucket/report", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors(STATUS, logger)
@@ -560,7 +560,7 @@ func TestAllHandlers(t *testing.T) {
 		os.Setenv("TOKEN", "1212121")
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 
-		requestPayload := `{  "id": "123456789", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
+		requestPayload := `{ "data": {"id":"13124"}, "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/s3bucket/report", bytes.NewBuffer([]byte(requestPayload)))
 		conn := connectors.NewTestConnectors(STATUS, logger)
