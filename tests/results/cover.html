@@ -54,9 +54,15 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/handlers/handlers.go (95.7%)</option>
+				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors/connections.go (84.6%)</option>
 				
-				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/validator/validate.go (100.0%)</option>
+				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors/fake-connectors.go (94.7%)</option>
+				
+				<option value="file2">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/handlers/fake-connectors.go (93.5%)</option>
+				
+				<option value="file3">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/handlers/handlers.go (95.7%)</option>
+				
+				<option value="file4">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/validator/validate.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -70,7 +76,418 @@
 		</div>
 		<div id="content">
 		
-		<pre class="file" id="file0" style="display: none">package handlers
+		<pre class="file" id="file0" style="display: none">package connectors
+
+import (
+        "encoding/json"
+        "fmt"
+        "io/ioutil"
+
+        "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/schema"
+        "github.com/aws/aws-sdk-go/service/s3"
+        gocb "github.com/couchbase/gocb/v2"
+)
+
+// Using the +build directive we can plugin (via the receiver) fake or real connectors
+
+// Error - log wrapper
+func (c *Connectors) Error(msg string, val ...interface{}) <span class="cov8" title="1">{
+        c.Logger.Error(fmt.Sprintf(msg, val...))
+}</span>
+
+// Info - log wrapper
+func (c *Connectors) Info(msg string, val ...interface{}) <span class="cov8" title="1">{
+        c.Logger.Info(fmt.Sprintf(msg, val...))
+}</span>
+
+// Debug - log wrapper
+func (c *Connectors) Debug(msg string, val ...interface{}) <span class="cov8" title="1">{
+        c.Logger.Debug(fmt.Sprintf(msg, val...))
+}</span>
+
+// Trace - log wrapper
+func (c *Connectors) Trace(msg string, val ...interface{}) <span class="cov8" title="1">{
+        c.Logger.Trace(fmt.Sprintf(msg, val...))
+}</span>
+
+// GetObject - S3 Object download wrapper
+func (c *Connectors) GetObject(opts *s3.GetObjectInput) (*schema.ReportContent, error) <span class="cov8" title="1">{
+        var rc *schema.ReportContent
+        result, err := c.S3Service.GetObject(opts)
+        if err != nil </span><span class="cov8" title="1">{
+                // Message from an error.
+                c.Error("Function GetObject %v", err)
+                return rc, err
+        }</span>
+
+        <span class="cov8" title="1">b, err := ioutil.ReadAll(result.Body)
+        if err != nil </span><span class="cov0" title="0">{
+                c.Error("Function GetObject %v", err)
+                return rc, err
+        }</span>
+        <span class="cov8" title="1">err = json.Unmarshal(b, &amp;rc)
+        if err != nil </span><span class="cov8" title="1">{
+                c.Error("Function GetObject %v", err)
+                return rc, err
+        }</span>
+
+        <span class="cov8" title="1">return rc, nil</span>
+}
+
+// Upsert : wrapper function for couchbase update
+func (c *Connectors) Upsert(uuid string, value interface{}, opts *gocb.UpsertOptions) (*gocb.MutationResult, error) <span class="cov8" title="1">{
+        collection := c.Bucket.DefaultCollection()
+        return collection.Upsert(uuid, value, opts)
+}</span>
+
+// GetList - get all reports list
+func (c *Connectors) GetList(offset string, limit string) ([]schema.ReportList, error) <span class="cov8" title="1">{
+        var stats []schema.ReportList
+        var stat *schema.ReportList
+
+        query := "select meta().id as id,* from servisbotstats offset " + offset + " limit " + limit
+        c.Trace("Function GetList %s", query)
+        res, err := c.Cluster.Query(query, &amp;gocb.QueryOptions{})
+        if err != nil </span><span class="cov8" title="1">{
+                return stats, err
+        }</span>
+
+        // iterate through each object
+        <span class="cov8" title="1">for res.Next() </span><span class="cov8" title="1">{
+                err := res.Row(&amp;stat)
+                if err != nil </span><span class="cov0" title="0">{
+                        break</span>
+                }
+                <span class="cov8" title="1">stats = append(stats, *stat)</span>
+        }
+
+        // always check for errors after iterating
+        <span class="cov8" title="1">err = res.Err()
+        if err != nil </span><span class="cov0" title="0">{
+                return stats, err
+        }</span>
+        <span class="cov8" title="1">return stats, nil</span>
+}
+
+// GetListCount - get total of reports in related to s3 report bucket from couchbase
+func (c *Connectors) GetListCount() (int64, error) <span class="cov8" title="1">{
+        var count int64
+
+        query := "select count(meta().id) as count from servisbotstats"
+        c.Trace("Function GetListCount %s", query)
+        res, err := c.Cluster.Query(query, &amp;gocb.QueryOptions{})
+        if err != nil </span><span class="cov0" title="0">{
+                return count, err
+        }</span>
+
+        <span class="cov8" title="1">err = res.One(&amp;count)
+        if err != nil </span><span class="cov0" title="0">{
+                return count, err
+        }</span>
+
+        // always check for errors after iterating
+        <span class="cov8" title="1">err = res.Err()
+        if err != nil </span><span class="cov0" title="0">{
+                return count, err
+        }</span>
+        <span class="cov8" title="1">return count, nil</span>
+}
+
+// GetAllStats - get stats for bot accuracy
+func (c *Connectors) GetAllStats() ([]schema.Stat, error) <span class="cov8" title="1">{
+        var stats []schema.Stat
+        var stat *schema.Stat
+
+        query := "select count(meta().id) as count,`success` from servisbotstats group by `success`"
+        c.Trace("Function GetAllStats %s", query)
+        res, err := c.Cluster.Query(query, &amp;gocb.QueryOptions{})
+        if err != nil </span><span class="cov0" title="0">{
+                return stats, err
+        }</span>
+
+        // iterate through each object
+        <span class="cov8" title="1">for res.Next() </span><span class="cov8" title="1">{
+                err := res.Row(&amp;stat)
+                if err != nil </span><span class="cov0" title="0">{
+                        break</span>
+                }
+                <span class="cov8" title="1">stats = append(stats, *stat)</span>
+        }
+
+        // always check for errors after iterating
+        <span class="cov8" title="1">err = res.Err()
+        if err != nil </span><span class="cov0" title="0">{
+                return stats, err
+        }</span>
+        <span class="cov8" title="1">return stats, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">// +build fake
+
+package connectors
+
+import (
+        "bytes"
+        "encoding/json"
+        "errors"
+        "io/ioutil"
+        "reflect"
+
+        "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/schema"
+        "github.com/aws/aws-sdk-go/service/s3"
+        gocb "github.com/couchbase/gocb/v2"
+        "github.com/microlib/simple"
+)
+
+// Fake connectors for testing in this package
+// Used by connections_test.go
+
+var count int = 0
+
+// Connectors - overrides the real implemntation (using gocb.* dependencies)
+// The file directive +build mock ensures its use (see the first line of this file)_
+type Connectors struct {
+        Bucket    *FakeBucket
+        Cluster   *FakeCluster
+        S3Service *FakeS3
+        Logger    *simple.Logger
+        Flag      string
+}
+
+// FakeCluster
+type FakeCluster struct {
+        Force string
+}
+
+// FakeBucket
+type FakeBucket struct {
+        Force string
+}
+
+// FakeQuery
+type FakeQuery struct {
+}
+
+// FakeCollection
+type FakeCollection struct {
+        Force string
+}
+
+// FakeResult
+type FakeResult struct {
+        Force string
+}
+
+// Fake AWS S3 session
+type FakeS3 struct {
+        Force string
+}
+
+func (fs3 *FakeS3) GetObject(opts *s3.GetObjectInput) (*s3.GetObjectOutput, error) <span class="cov8" title="1">{
+        var obj *s3.GetObjectOutput
+        var data []byte
+
+        if fs3.Force == "true" </span><span class="cov8" title="1">{
+                return obj, errors.New("Function GetObject forced error")
+        }</span>
+        <span class="cov8" title="1">if fs3.Force == "data" </span><span class="cov8" title="1">{
+                data = []byte("{ test")
+        }</span> else<span class="cov8" title="1"> {
+                data, _ = ioutil.ReadFile("../../tests/report-payload.json")
+        }</span>
+        <span class="cov8" title="1">obj = &amp;s3.GetObjectOutput{Body: ioutil.NopCloser(bytes.NewBuffer(data))}
+        return obj, nil</span>
+}
+
+// Couchbase fake
+
+// Query - inject our implementation for testing
+func (fc *FakeCluster) Query(query string, opts *gocb.QueryOptions) (*FakeResult, error) <span class="cov8" title="1">{
+        if fc.Force == "true" </span><span class="cov8" title="1">{
+                return &amp;FakeResult{}, errors.New("Function Query forced error")
+        }</span>
+        <span class="cov8" title="1">return &amp;FakeResult{Force: fc.Force}, nil</span>
+}
+
+// DefaultCollection - override the original gocb implementation
+func (fb *FakeBucket) DefaultCollection() *FakeCollection <span class="cov8" title="1">{
+        return &amp;FakeCollection{Force: fb.Force}
+}</span>
+
+// Next - override the original golang implementation
+func (fr *FakeResult) Next() bool <span class="cov8" title="1">{
+        if count &lt; 2 </span><span class="cov8" title="1">{
+                count++
+                return true
+        }</span>
+        <span class="cov8" title="1">count = 0
+        return false</span>
+}
+
+// Row - override the original golang implementation
+func (fr *FakeResult) Row(ptr interface{}) error <span class="cov8" title="1">{
+        if fr.Force == "true" </span><span class="cov0" title="0">{
+                return errors.New("Function Row forced error")
+        }</span>
+        <span class="cov8" title="1">if reflect.TypeOf(ptr).String() == "**schema.Stat" </span><span class="cov8" title="1">{
+                var stat *schema.Stat
+                data := `{
+                        "count": 60,
+                        "success": true
+                }`
+                json.Unmarshal([]byte(data), &amp;stat)
+                *ptr.(**schema.Stat) = stat
+        }</span> else<span class="cov8" title="1"> {
+                var rl *schema.ReportList
+                data := `{ "id": "096esbpfrk8b3nhdlfhditsmk10gj03g06i3c201.json",
+    "servisbotstats": {
+      "EmailClassification": "Cancel",
+      "ProcessOutcome": "No Action",
+      "UserClassification": "",
+      "success": false
+    }}`
+                json.Unmarshal([]byte(data), &amp;rl)
+                *ptr.(**schema.ReportList) = rl
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+// One - override the original golang implementation
+func (fr *FakeResult) One(ptr interface{}) error <span class="cov8" title="1">{
+        if fr.Force == "true" </span><span class="cov0" title="0">{
+                return errors.New("Function One forced error")
+        }</span>
+        <span class="cov8" title="1">*ptr.(*int64) = 1234
+        return nil</span>
+}
+
+// Err - fake the error handler
+func (fr *FakeResult) Err() error <span class="cov8" title="1">{
+        return nil
+}</span>
+
+// Close - do we need to explain ?
+func (fr *FakeResult) Close() {<span class="cov0" title="0">
+}</span>
+
+// Upsert : wrapper function for couchbase collection upsert
+func (fc *FakeCollection) Upsert(col string, value interface{}, opts *gocb.UpsertOptions) (*gocb.MutationResult, error) <span class="cov8" title="1">{
+        if fc.Force == "error" </span><span class="cov8" title="1">{
+                return &amp;gocb.MutationResult{}, errors.New("Forced collection upsert error")
+        }</span>
+        <span class="cov8" title="1">return &amp;gocb.MutationResult{}, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package handlers
+
+import (
+        "encoding/json"
+        "errors"
+        "fmt"
+        "io/ioutil"
+
+        "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors"
+        "gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/schema"
+        "github.com/aws/aws-sdk-go/service/s3"
+        gocb "github.com/couchbase/gocb/v2"
+        "github.com/microlib/simple"
+)
+
+// Fake connectors used in this package for testing only
+// Used by handlers_test.go
+
+var count int = 0
+
+type FakeS3 struct {
+}
+
+// Fake all connections
+type FakeConnectors struct {
+        S3Service *FakeS3
+        Logger    *simple.Logger
+        Flag      string
+        Mode      string
+}
+
+// Error - log wrapper
+func (c *FakeConnectors) Error(msg string, val ...interface{}) <span class="cov8" title="1">{
+        c.Logger.Error(fmt.Sprintf(msg, val...))
+}</span>
+
+// Info - log wrapper
+func (c *FakeConnectors) Info(msg string, val ...interface{}) <span class="cov0" title="0">{
+        c.Logger.Info(fmt.Sprintf(msg, val...))
+}</span>
+
+// Debug - log wrapper
+func (c *FakeConnectors) Debug(msg string, val ...interface{}) <span class="cov0" title="0">{
+        c.Logger.Debug(fmt.Sprintf(msg, val...))
+}</span>
+
+// Trace - log wrapper
+func (c *FakeConnectors) Trace(msg string, val ...interface{}) <span class="cov8" title="1">{
+        c.Logger.Trace(fmt.Sprintf(msg, val...))
+}</span>
+
+// Meta - log wrapper
+func (c *FakeConnectors) Meta(flag string) string <span class="cov8" title="1">{
+        c.Flag = flag
+        return flag
+}</span>
+
+// Upsert : wrapper function for couchbase update
+func (c *FakeConnectors) Upsert(uuid string, value interface{}, opts *gocb.UpsertOptions) (*gocb.MutationResult, error) <span class="cov8" title="1">{
+        if c.Flag == "true" </span><span class="cov8" title="1">{
+                return &amp;gocb.MutationResult{}, errors.New("Upsert (forced error)")
+        }</span>
+        <span class="cov8" title="1">return &amp;gocb.MutationResult{}, nil</span>
+}
+
+// GetList - Couchbase list wrapper
+func (c *FakeConnectors) GetList(offset string, limit string) ([]schema.ReportList, error) <span class="cov8" title="1">{
+        var list []schema.ReportList
+        if c.Flag == "true" </span><span class="cov8" title="1">{
+                return list, errors.New("forced GetList (DB) error")
+        }</span>
+        <span class="cov8" title="1">b, _ := ioutil.ReadFile("../../tests/payload-reportlist-01.json")
+        c.Trace("GetList mock response %s", string(b))
+        json.Unmarshal(b, &amp;list)
+        return list, nil</span>
+}
+
+// GetAllStats - Couchbase stats wrapper
+func (c *FakeConnectors) GetAllStats() ([]schema.Stat, error) <span class="cov8" title="1">{
+        var stats []schema.Stat
+        if c.Flag == "true" </span><span class="cov8" title="1">{
+                return stats, errors.New("forced GetAllStats (DB) error")
+        }</span>
+        <span class="cov8" title="1">b, _ := ioutil.ReadFile("../../tests/payload-stats.json")
+        c.Trace("GetAllStats mock response %s", string(b))
+        json.Unmarshal(b, &amp;stats)
+        return stats, nil</span>
+}
+
+// GetObject - S3 Object download wrapper
+func (c *FakeConnectors) GetObject(opts *s3.GetObjectInput) (*schema.ReportContent, error) <span class="cov8" title="1">{
+        var rc *schema.ReportContent
+        if c.Flag == "true" </span><span class="cov8" title="1">{
+                return rc, errors.New("forced s3 ListObjectsV2 error")
+        }</span>
+        <span class="cov8" title="1">b, _ := ioutil.ReadFile("../../tests/report-payload.json")
+        json.Unmarshal(b, &amp;rc)
+        return rc, nil</span>
+}
+
+// NewTestConnector - creates all test connectors
+func NewTestConnectors(code int, logger *simple.Logger) connectors.Clients <span class="cov8" title="1">{
+        conns := &amp;FakeConnectors{Logger: logger, Flag: "false"}
+        return conns
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package handlers
 
 import (
         "bytes"
@@ -394,7 +811,7 @@ func verifyJwtToken(tokenStr string) (*schema.Credentials, error) <span class="c
 }
 </pre>
 		
-		<pre class="file" id="file1" style="display: none">package validator
+		<pre class="file" id="file4" style="display: none">package validator
 
 import (
         "fmt"

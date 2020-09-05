@@ -4,10 +4,16 @@ all: clean test build
 
 build: 
 	mkdir -p build
-	go build -o build ./...
+	go build -o build -tags real ./...
+
+build-dev:
+	mkdir -p build
+	GOOS=linux go build -ldflags="-s -w" -o build ./...
+	chmod 755 build/microservice
+	chmod 755 build/uid_entrypoint.sh
 
 test:
-	go test -v -coverprofile=tests/results/cover.out ./...
+	go test -v -coverprofile=tests/results/cover.out -tags fake ./...
 
 cover:
 	go tool cover -html=tests/results/cover.out -o tests/results/cover.html

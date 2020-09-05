@@ -1,62 +1,16 @@
 package connectors
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
-	"os"
 
 	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/schema"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	gocb "github.com/couchbase/gocb/v2"
-	"github.com/microlib/simple"
 )
 
-// Connections struct - all backend connections in a common object
-type Connectors struct {
-	S3Session *session.Session
-	Bucket    *gocb.Bucket
-	Cluster   *gocb.Cluster
-	Http      *http.Client
-	Logger    *simple.Logger
-	Mode      string
-}
-
-// NewClientConnections - fucntion that creates all client connections and returns the interface
-func NewClientConnections(logger *simple.Logger) Clients {
-	// set up http object
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	httpClient := &http.Client{Transport: tr}
-
-	sess, err := session.NewSession(&aws.Config{Region: aws.String(os.Getenv("AWS_REGION"))})
-	if err != nil {
-		logger.Error(fmt.Sprintf("NewClientConnections : %v", err))
-		panic(err)
-	}
-	// svc := s3.New(sess)
-	opts := gocb.ClusterOptions{
-		Username: os.Getenv("COUCHBASE_USER"),
-		Password: os.Getenv("COUCHBASE_PASSWORD"),
-	}
-	cluster, err := gocb.Connect(os.Getenv("COUCHBASE_HOST"), opts)
-	if err != nil {
-		logger.Error(fmt.Sprintf("Couchbase connection: %v", err))
-		panic(err)
-	}
-
-	// get a bucket reference
-	// bucket := cluster.Bucket(os.Getenv("COUCHBASE_BUCKET"), &gocb.BucketOptions{}) v.2.0.0-beta-1
-	bucket := cluster.Bucket(os.Getenv("COUCHBASE_BUCKET"))
-	logger.Info(fmt.Sprintf("Couchbase connection: %v", bucket))
-
-	return &Connectors{Bucket: bucket, Cluster: cluster, S3Session: sess, Http: httpClient, Logger: logger}
-}
+// Using the +build directive we can plugin (via the receiver) fake or real connectors
 
 // Error - log wrapper
 func (c *Connectors) Error(msg string, val ...interface{}) {
@@ -78,31 +32,15 @@ func (c *Connectors) Trace(msg string, val ...interface{}) {
 	c.Logger.Trace(fmt.Sprintf(msg, val...))
 }
 
-// Meta - test wrapper
-func (c *Connectors) Meta(info string) string {
-	return info
-}
-
-// Do - http wrapper
-func (c *Connectors) Do(req *http.Request) (*http.Response, error) {
-	return c.Http.Do(req)
-}
-
-// SetMode - simple push pull flag setting
-func (c *Connectors) SetMode(mode string) {
-	c.Mode = mode
-}
-
-// GetMode - simple flag check routine
-func (c *Connectors) GetMode() string {
-	return c.Mode
+// Meta - used for testing ignored in real implementation
+func (c *Connectors) Meta(force string) string {
+	return force
 }
 
 // GetObject - S3 Object download wrapper
 func (c *Connectors) GetObject(opts *s3.GetObjectInput) (*schema.ReportContent, error) {
 	var rc *schema.ReportContent
-	svc := s3.New(c.S3Session)
-	result, err := svc.GetObject(opts)
+	result, err := c.S3Service.GetObject(opts)
 	if err != nil {
 		// Message from an error.
 		c.Error("Function GetObject %v", err)

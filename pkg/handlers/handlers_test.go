@@ -10,7 +10,6 @@ import (
 	"os"
 	"testing"
 
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors"
 	"github.com/gorilla/mux"
 	"github.com/microlib/simple"
 )
@@ -24,14 +23,14 @@ func (errReader) Read(p []byte) (n int, err error) {
 // TestAllHandlers - main test entry point
 func TestAllHandlers(t *testing.T) {
 
-	logger := &simple.Logger{Level: "trace"}
+	logger := &simple.Logger{Level: "info"}
 
 	t.Run("IsAlive : should pass", func(t *testing.T) {
 		var STATUS int = 200
 		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/api/v2/sys/info/isalive", nil)
-		connectors.NewTestConnectors(STATUS, logger)
+		NewTestConnectors(STATUS, logger)
 		handler := http.HandlerFunc(IsAlive)
 		handler.ServeHTTP(rr, req)
 
@@ -54,7 +53,7 @@ func TestAllHandlers(t *testing.T) {
 		requestPayload := `{  "email": "cduffy@tfd.ie", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/list/reports/0/10", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
 			"lastobject": "test",
@@ -81,7 +80,7 @@ func TestAllHandlers(t *testing.T) {
 		os.Setenv("JWT_SECRETKEY", "Thr33f0ldSystems?CSsD!@%2^")
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/list/reports/0/10", errReader(0))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
 			"lastobject": "test",
@@ -110,7 +109,7 @@ func TestAllHandlers(t *testing.T) {
 		requestPayload := `{  email": "cduffy@tfd.ie", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/list/reports/0/10", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
 			"lastobject": "test",
@@ -139,7 +138,7 @@ func TestAllHandlers(t *testing.T) {
 		requestPayload := `{  "email": "cduffy@tfd.ie", "jwttoke": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/list/reports/0/10", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
 			"lastobject": "test",
@@ -168,7 +167,7 @@ func TestAllHandlers(t *testing.T) {
 		requestPayload := `{  "email": "cduffy@tfd.ie", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/list/reports/0/10", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		conn.Meta("true")
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -198,7 +197,7 @@ func TestAllHandlers(t *testing.T) {
 		requestPayload := `{ "data": {"id":"test","servisbotstats":{"emailclassification":"test","processoutcome":"test","userclassification":"test","success": false}}, "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/reports/", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
 			"lastobject": "test",
@@ -226,7 +225,7 @@ func TestAllHandlers(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/reports/", errReader(0))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
 			"lastobject": "test",
@@ -255,7 +254,7 @@ func TestAllHandlers(t *testing.T) {
 		requestPayload := `{ data": {"id":"test","servisbotstats":{"emailclassification":"test","processoutcome":"test","userclassification":"test","success": false}}, "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/reports/", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
 			"lastobject": "test",
@@ -284,7 +283,7 @@ func TestAllHandlers(t *testing.T) {
 		requestPayload := `{ "data": {"id":"test","servisbotstats":{"emailclassification":"test","processoutcome":"test","userclassification":"test","success": false}}, "jwttoke": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/reports/", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
 			"lastobject": "test",
@@ -313,7 +312,7 @@ func TestAllHandlers(t *testing.T) {
 		requestPayload := `{ "data": {"id":"test","servisbotstats":{"emailclassification":"test","processoutcome":"test","userclassification":"test","success": false}}, "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/reports/", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		conn.Meta("true")
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
@@ -343,7 +342,7 @@ func TestAllHandlers(t *testing.T) {
 		requestPayload := `{ "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/stats", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			StatsHandler(w, r, conn)
 		})
@@ -366,7 +365,7 @@ func TestAllHandlers(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/stats", errReader(0))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			StatsHandler(w, r, conn)
 		})
@@ -390,7 +389,7 @@ func TestAllHandlers(t *testing.T) {
 		requestPayload := `{ jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/stats", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			StatsHandler(w, r, conn)
 		})
@@ -414,7 +413,7 @@ func TestAllHandlers(t *testing.T) {
 		requestPayload := `{ "jwttoke": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/stats", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			StatsHandler(w, r, conn)
 		})
@@ -438,7 +437,7 @@ func TestAllHandlers(t *testing.T) {
 		requestPayload := `{ "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/stats", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		conn.Meta("true")
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			StatsHandler(w, r, conn)
@@ -463,7 +462,7 @@ func TestAllHandlers(t *testing.T) {
 		requestPayload := `{ "data": {"id":"13124"},"jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/s3bucket/report", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ReportObjectHandler(w, r, conn)
 		})
@@ -486,7 +485,7 @@ func TestAllHandlers(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/s3bucket/report", errReader(0))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ReportObjectHandler(w, r, conn)
 		})
@@ -510,7 +509,7 @@ func TestAllHandlers(t *testing.T) {
 		requestPayload := `{  email": "cduffy@tfd.ie", "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/is3bucket/report", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
 			"key": "test",
@@ -539,7 +538,7 @@ func TestAllHandlers(t *testing.T) {
 		requestPayload := `{"data": {"id":"13124"}, "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/s3bucket/report", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ReportObjectHandler(w, r, conn)
 		})
@@ -563,7 +562,7 @@ func TestAllHandlers(t *testing.T) {
 		requestPayload := `{ "data": {"id":"13124"}, "jwttoken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1OTA3NTY4MjAsInN5c3RlbSI6ImNvbnRhY3QtZm9ybSIsImN1c3RvbWVyTnVtYmVyIjoiMDAwMTE5OTQ0MTYwIiwidXNlciI6ImNkdWZmeUB0ZmQuaWUifQ.fisOWBMqnbzzcNQpqO6Cmu6DEMjroaZYgTsAeEmR36A" }`
 		rr := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/api/v1/s3bucket/report", bytes.NewBuffer([]byte(requestPayload)))
-		conn := connectors.NewTestConnectors(STATUS, logger)
+		conn := NewTestConnectors(STATUS, logger)
 		conn.Meta("true")
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ReportObjectHandler(w, r, conn)

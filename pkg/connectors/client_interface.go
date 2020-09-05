@@ -12,7 +12,7 @@ type Clients interface {
 	Info(string, ...interface{})
 	Debug(string, ...interface{})
 	Trace(string, ...interface{})
-	Meta(string) string
+	Meta(force string) string
 	GetAllStats() ([]schema.Stat, error)
 	GetList(string, string) ([]schema.ReportList, error)
 	Upsert(uuid string, value interface{}, opts *gocb.UpsertOptions) (*gocb.MutationResult, error)
