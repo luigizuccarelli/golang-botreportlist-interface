@@ -125,7 +125,7 @@ func (c *Connectors) GetAllStats() ([]schema.Stat, error) {
 	var stats []schema.Stat
 	var stat *schema.Stat
 
-	query := "select count(meta().id) as count,`success` from servisbotstats group by `success`"
+	query := "select count(meta().id) as count,`Success` from servisbotstats group by `Success`"
 	c.Trace("Function GetAllStats %s", query)
 	res, err := c.Cluster.Query(query, &gocb.QueryOptions{})
 	if err != nil {
