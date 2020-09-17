@@ -203,7 +203,7 @@ func (c *Connectors) GetAllStats() ([]schema.Stat, error) <span class="cov8" tit
         var stats []schema.Stat
         var stat *schema.Stat
 
-        query := "select count(meta().id) as count,`success` from servisbotstats group by `Success`"
+        query := "select count(meta().id) as count,`Success` from servisbotstats group by `Success`"
         c.Trace("Function GetAllStats %s", query)
         res, err := c.Cluster.Query(query, &amp;gocb.QueryOptions{})
         if err != nil </span><span class="cov0" title="0">{

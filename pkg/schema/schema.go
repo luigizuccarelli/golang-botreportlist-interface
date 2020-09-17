@@ -93,6 +93,8 @@ type ListObject struct {
 	EmailClassification string `json:"EmailClassification"`
 	UserClassification  string `json:"UserClassification"`
 	Success             bool   `json:"Success"`
+	Timestamp           string `json:"Timestamp"`
+	AffiliateId         string `json:"AffiliateId"`
 }
 
 type ReportList struct {
