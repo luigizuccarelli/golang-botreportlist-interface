@@ -62,9 +62,9 @@ type ReportContent struct {
 	Endpoint            interface{}    `json:"Endpoint"`
 	BotProcessingMode   string         `json:"BotProcessingMode"`
 	ProcessOutcome      string         `json:"ProcessOutcome"`
-	Entities            []string       `json:"Entities"`
-	EmailClassification []string       `json:"EmailClassification"`
-	UserClassification  []string       `json:"UserClassification"`
+	Entities            string         `json:"Entities"`
+	EmailClassification string         `json:"EmailClassification"`
+	UserClassification  string         `json:"UserClassification"`
 	Success             bool           `json:"Success"`
 	CustomerInfo        CustomerDetail `json:"CustomerInfo"`
 }

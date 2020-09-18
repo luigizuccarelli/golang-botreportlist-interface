@@ -10,12 +10,8 @@
     "BotProcessingMode":"simulation",
     "ProcessOutcome":"No Action",
     "Entities":null,
-    "EmailClassification":[
-      "Cancel"
-    ],
-    "UserClassification":[
-      "Cancel"
-    ],
+    "EmailClassification": "Cancel",
+    "UserClassification": "Cancel",
     "success":true,
     "CustomerInfo": {
       "CustomerNumber": "customerNumber",
