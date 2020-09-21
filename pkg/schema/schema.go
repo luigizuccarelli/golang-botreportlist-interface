@@ -72,7 +72,7 @@ type ReportContent struct {
 type CustomerDetail struct {
 	CustomerNumber  string `json:"customerNumber"`
 	ExpirationDate  string `json:"expirationDate"`
-	IssuesRemaining string `json:"issuesRemaining"`
+	IssuesRemaining int64 `json:"issuesRemaining"`
 	CircStatus      string `json:"circStatus"`
 	RenewalFlag     string `json:"renewalFlag"`
 	ProductFamily   string `json:"productFamily"`

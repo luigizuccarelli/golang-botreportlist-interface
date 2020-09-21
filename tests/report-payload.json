@@ -16,7 +16,7 @@
     "CustomerInfo": {
       "CustomerNumber": "customerNumber",
 	    "ExpirationDate":  "expirationDate",
-	    "IssuesRemaining": "issuesRemaining",
+	    "IssuesRemaining": 0,
 	    "CircStatus":      "circStatus",
 	    "RenewalFlag":     "renewalFlag",
 	    "ProductFamily":   "productFamily",
