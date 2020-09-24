@@ -57,12 +57,14 @@ type ReportContent struct {
 	MessageID           string         `json:"MessageId"`
 	EmailBody           string         `json:"EmailBody"`
 	EmailSubject        string         `json:"EmailSubject"`
+	EmailAdress         string         `json:"EmailAddress"`
+	EmailRecipient      string         `json:"EmailRecipient"`
 	EmailS3Key          string         `json:"EmailS3Key"`
 	Timestamp           int64          `json:"Timestamp"`
 	Endpoint            interface{}    `json:"Endpoint"`
 	BotProcessingMode   string         `json:"BotProcessingMode"`
 	ProcessOutcome      string         `json:"ProcessOutcome"`
-	Entities            string         `json:"Entities"`
+	Entities            []string       `json:"Entities"`
 	EmailClassification string         `json:"EmailClassification"`
 	UserClassification  string         `json:"UserClassification"`
 	Success             bool           `json:"Success"`
@@ -72,7 +74,7 @@ type ReportContent struct {
 type CustomerDetail struct {
 	CustomerNumber  string `json:"customerNumber"`
 	ExpirationDate  string `json:"expirationDate"`
-	IssuesRemaining int64 `json:"issuesRemaining"`
+	IssuesRemaining int64  `json:"issuesRemaining"`
 	CircStatus      string `json:"circStatus"`
 	RenewalFlag     string `json:"renewalFlag"`
 	ProductFamily   string `json:"productFamily"`
