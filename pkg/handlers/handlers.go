@@ -142,6 +142,63 @@ func ReportUpdateHandler(w http.ResponseWriter, r *http.Request, con connectors.
 	return
 }
 
+// ReportCountHandler - handler that returns servisBOT accuracy
+func ReportCountHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
+	var servisbotRequest *schema.ServisBOTRequest
+	addHeaders(w, r)
+
+	// read the jwt token data in the body
+	// we don't use authorization header as the token can get quite large due to form data
+	// ensure we don't have nil - it will cause a null pointer exception
+	if r.Body == nil {
+		r.Body = ioutil.NopCloser(bytes.NewBufferString(""))
+	}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		msg := "ReportCountHandler body data error : %v"
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+		fmt.Fprintf(w, string(b))
+		return
+	}
+
+	con.Trace("ReportCountHandler request body : %s", string(body))
+
+	errs := json.Unmarshal(body, &servisbotRequest)
+	if errs != nil {
+		msg := "ReportCountHandler could not unmarshal input data from servisBOT to schema %v"
+		con.Error(msg, errs)
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
+		fmt.Fprintf(w, string(b))
+		return
+	}
+
+	// check the jwt token
+	_, err = verifyJwtToken(servisbotRequest.JwtToken)
+	if err != nil {
+		msg := "ReportCountHandler verifyToken  %v"
+		con.Error(msg, err)
+		b := responseErrorFormat(http.StatusForbidden, w, msg, err)
+		fmt.Fprintf(w, string(b))
+		return
+	}
+
+	// get the stats data from couchbase
+	res, err := con.GetListCount()
+	if err != nil {
+		msg := "ReportCountHandler (get) couchbase  %v"
+		con.Error(msg, err)
+		b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+		fmt.Fprintf(w, string(b))
+		return
+	}
+
+	response := &schema.ResponseCount{Code: http.StatusOK, Status: "OK", Message: "ReportCountHandler retrieved data successfully", Count: *res}
+	w.WriteHeader(http.StatusOK)
+	b, _ := json.MarshalIndent(response, "", "	")
+	fmt.Fprintf(w, string(b))
+	return
+}
+
 // StatsHandler - handler that returns servisBOT accuracy
 func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) {
 	var servisbotRequest *schema.ServisBOTRequest

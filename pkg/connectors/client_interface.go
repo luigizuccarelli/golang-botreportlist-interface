@@ -15,6 +15,7 @@ type Clients interface {
 	Meta(force string) string
 	GetAllStats() ([]schema.Stat, error)
 	GetList(string, string) ([]schema.ReportList, error)
+	GetListCount() (*int64, error)
 	Upsert(uuid string, value interface{}, opts *gocb.UpsertOptions) (*gocb.MutationResult, error)
 	GetObject(in *s3.GetObjectInput) (*schema.ReportContent, error)
 }

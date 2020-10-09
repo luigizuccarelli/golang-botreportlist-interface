@@ -130,10 +130,12 @@ func (fr *FakeResult) Row(ptr interface{}) error {
 
 // One - override the original golang implementation
 func (fr *FakeResult) One(ptr interface{}) error {
+	var count = make(map[string]int64)
 	if fr.Force == "true" {
 		return errors.New("Function One forced error")
 	}
-	*ptr.(*int64) = 1234
+	count["count"] = int64(1234)
+	*ptr.(*map[string]int64) = count
 	return nil
 }
 

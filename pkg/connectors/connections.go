@@ -72,7 +72,7 @@ func (c *Connectors) GetList(offset string, limit string) ([]schema.ReportList, 
 	var stats []schema.ReportList
 	var stat *schema.ReportList
 
-	query := "select meta().id as id,* from servisbotstats offset " + offset + " limit " + limit
+	query := "select meta().id as id,* from servisbotstats order by `servisbotstats`.`Timestamp` desc offset " + offset + " limit " + limit
 	c.Trace("Function GetList %s", query)
 	res, err := c.Cluster.Query(query, &gocb.QueryOptions{})
 	if err != nil {
@@ -97,27 +97,31 @@ func (c *Connectors) GetList(offset string, limit string) ([]schema.ReportList, 
 }
 
 // GetListCount - get total of reports in related to s3 report bucket from couchbase
-func (c *Connectors) GetListCount() (int64, error) {
-	var count int64
-
+func (c *Connectors) GetListCount() (*int64, error) {
+	var count map[string]int64
 	query := "select count(meta().id) as count from servisbotstats"
 	c.Trace("Function GetListCount %s", query)
 	res, err := c.Cluster.Query(query, &gocb.QueryOptions{})
 	if err != nil {
-		return count, err
+		v := int64(0)
+		return &v, err
 	}
-
 	err = res.One(&count)
+	c.Trace("Function GetListCount count %v", count)
 	if err != nil {
-		return count, err
+		c.Trace("Function GetListCount %v", err)
+		v := int64(0)
+		return &v, err
 	}
 
 	// always check for errors after iterating
 	err = res.Err()
 	if err != nil {
-		return count, err
+		v := int64(0)
+		return &v, err
 	}
-	return count, nil
+	v := count["count"]
+	return &v, nil
 }
 
 // GetAllStats - get stats for bot accuracy

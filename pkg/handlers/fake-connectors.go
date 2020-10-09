@@ -87,6 +87,17 @@ func (c *FakeConnectors) GetAllStats() ([]schema.Stat, error) {
 	return stats, nil
 }
 
+// GetListCount - Couchbase list count wrapper
+func (c *FakeConnectors) GetListCount() (*int64, error) {
+	if c.Flag == "true" {
+		val := int64(0)
+		return &val, errors.New("forced GetListCount (DB) error")
+	}
+	c.Trace("GetListCount 1234")
+	val := int64(1234)
+	return &val, nil
+}
+
 // GetObject - S3 Object download wrapper
 func (c *FakeConnectors) GetObject(opts *s3.GetObjectInput) (*schema.ReportContent, error) {
 	var rc *schema.ReportContent

@@ -60,6 +60,10 @@ func startHttpServer(con connectors.Clients) *http.Server {
 		handlers.ListHandler(w, req, con)
 	}).Methods("POST", "OPTIONS")
 
+	r.HandleFunc("/api/v1/reports/count", func(w http.ResponseWriter, req *http.Request) {
+		handlers.ReportCountHandler(w, req, con)
+	}).Methods("POST", "OPTIONS")
+
 	r.HandleFunc("/api/v1/reports", func(w http.ResponseWriter, req *http.Request) {
 		handlers.ReportUpdateHandler(w, req, con)
 	}).Methods("POST", "OPTIONS")

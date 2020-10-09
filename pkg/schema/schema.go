@@ -8,6 +8,14 @@ type Response struct {
 	Reports []ReportList `json:"reports,omitempty"`
 }
 
+// ResponseCount schema
+type ResponseCount struct {
+	Code    int    `json:"code"`
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Count   int64  `json:"count"`
+}
+
 // StatsResponse schema
 type StatsResponse struct {
 	Code    int    `json:"code"`
@@ -95,7 +103,7 @@ type ListObject struct {
 	EmailClassification string `json:"EmailClassification"`
 	UserClassification  string `json:"UserClassification"`
 	Success             bool   `json:"Success"`
-	Timestamp           string `json:"Timestamp"`
+	Timestamp           int64  `json:"Timestamp"`
 	AffiliateId         string `json:"AffiliateId"`
 }
 

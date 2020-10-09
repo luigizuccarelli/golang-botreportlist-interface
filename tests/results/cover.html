@@ -55,13 +55,13 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors/connections.go (83.3%)</option>
+				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors/connections.go (79.2%)</option>
 				
-				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors/fake-connectors.go (94.7%)</option>
+				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors/fake-connectors.go (95.0%)</option>
 				
-				<option value="file2">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/handlers/fake-connectors.go (93.5%)</option>
+				<option value="file2">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/handlers/fake-connectors.go (94.6%)</option>
 				
-				<option value="file3">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/handlers/handlers.go (95.7%)</option>
+				<option value="file3">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/handlers/handlers.go (95.9%)</option>
 				
 				<option value="file4">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/validator/validate.go (100.0%)</option>
 				
@@ -151,7 +151,7 @@ func (c *Connectors) GetList(offset string, limit string) ([]schema.ReportList, 
         var stats []schema.ReportList
         var stat *schema.ReportList
 
-        query := "select meta().id as id,* from servisbotstats offset " + offset + " limit " + limit
+        query := "select meta().id as id,* from servisbotstats order by `servisbotstats`.`Timestamp` desc offset " + offset + " limit " + limit
         c.Trace("Function GetList %s", query)
         res, err := c.Cluster.Query(query, &amp;gocb.QueryOptions{})
         if err != nil </span><span class="cov8" title="1">{
@@ -176,27 +176,31 @@ func (c *Connectors) GetList(offset string, limit string) ([]schema.ReportList, 
 }
 
 // GetListCount - get total of reports in related to s3 report bucket from couchbase
-func (c *Connectors) GetListCount() (int64, error) <span class="cov8" title="1">{
-        var count int64
-
+func (c *Connectors) GetListCount() (*int64, error) <span class="cov8" title="1">{
+        var count map[string]int64
         query := "select count(meta().id) as count from servisbotstats"
         c.Trace("Function GetListCount %s", query)
         res, err := c.Cluster.Query(query, &amp;gocb.QueryOptions{})
         if err != nil </span><span class="cov0" title="0">{
-                return count, err
+                v := int64(0)
+                return &amp;v, err
         }</span>
-
         <span class="cov8" title="1">err = res.One(&amp;count)
+        c.Trace("Function GetListCount count %v", count)
         if err != nil </span><span class="cov0" title="0">{
-                return count, err
+                c.Trace("Function GetListCount %v", err)
+                v := int64(0)
+                return &amp;v, err
         }</span>
 
         // always check for errors after iterating
         <span class="cov8" title="1">err = res.Err()
         if err != nil </span><span class="cov0" title="0">{
-                return count, err
+                v := int64(0)
+                return &amp;v, err
         }</span>
-        <span class="cov8" title="1">return count, nil</span>
+        <span class="cov8" title="1">v := count["count"]
+        return &amp;v, nil</span>
 }
 
 // GetAllStats - get stats for bot accuracy
@@ -361,10 +365,12 @@ func (fr *FakeResult) Row(ptr interface{}) error <span class="cov8" title="1">{
 
 // One - override the original golang implementation
 func (fr *FakeResult) One(ptr interface{}) error <span class="cov8" title="1">{
+        var count = make(map[string]int64)
         if fr.Force == "true" </span><span class="cov0" title="0">{
                 return errors.New("Function One forced error")
         }</span>
-        <span class="cov8" title="1">*ptr.(*int64) = 1234
+        <span class="cov8" title="1">count["count"] = int64(1234)
+        *ptr.(*map[string]int64) = count
         return nil</span>
 }
 
@@ -473,6 +479,17 @@ func (c *FakeConnectors) GetAllStats() ([]schema.Stat, error) <span class="cov8"
         c.Trace("GetAllStats mock response %s", string(b))
         json.Unmarshal(b, &amp;stats)
         return stats, nil</span>
+}
+
+// GetListCount - Couchbase list count wrapper
+func (c *FakeConnectors) GetListCount() (*int64, error) <span class="cov8" title="1">{
+        if c.Flag == "true" </span><span class="cov8" title="1">{
+                val := int64(0)
+                return &amp;val, errors.New("forced GetListCount (DB) error")
+        }</span>
+        <span class="cov8" title="1">c.Trace("GetListCount 1234")
+        val := int64(1234)
+        return &amp;val, nil</span>
 }
 
 // GetObject - S3 Object download wrapper
@@ -631,6 +648,63 @@ func ReportUpdateHandler(w http.ResponseWriter, r *http.Request, con connectors.
         }</span>
 
         <span class="cov8" title="1">response := &amp;schema.Response{Code: http.StatusOK, Status: "OK", Message: fmt.Sprintf("ReportUpdateHandler posted data successfully %v", res)}
+        w.WriteHeader(http.StatusOK)
+        b, _ := json.MarshalIndent(response, "", "        ")
+        fmt.Fprintf(w, string(b))
+        return</span>
+}
+
+// ReportCountHandler - handler that returns servisBOT accuracy
+func ReportCountHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients) <span class="cov8" title="1">{
+        var servisbotRequest *schema.ServisBOTRequest
+        addHeaders(w, r)
+
+        // read the jwt token data in the body
+        // we don't use authorization header as the token can get quite large due to form data
+        // ensure we don't have nil - it will cause a null pointer exception
+        if r.Body == nil </span><span class="cov0" title="0">{
+                r.Body = ioutil.NopCloser(bytes.NewBufferString(""))
+        }</span>
+        <span class="cov8" title="1">body, err := ioutil.ReadAll(r.Body)
+        if err != nil </span><span class="cov8" title="1">{
+                msg := "ReportCountHandler body data error : %v"
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        <span class="cov8" title="1">con.Trace("ReportCountHandler request body : %s", string(body))
+
+        errs := json.Unmarshal(body, &amp;servisbotRequest)
+        if errs != nil </span><span class="cov8" title="1">{
+                msg := "ReportCountHandler could not unmarshal input data from servisBOT to schema %v"
+                con.Error(msg, errs)
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, errs)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        // check the jwt token
+        <span class="cov8" title="1">_, err = verifyJwtToken(servisbotRequest.JwtToken)
+        if err != nil </span><span class="cov8" title="1">{
+                msg := "ReportCountHandler verifyToken  %v"
+                con.Error(msg, err)
+                b := responseErrorFormat(http.StatusForbidden, w, msg, err)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        // get the stats data from couchbase
+        <span class="cov8" title="1">res, err := con.GetListCount()
+        if err != nil </span><span class="cov8" title="1">{
+                msg := "ReportCountHandler (get) couchbase  %v"
+                con.Error(msg, err)
+                b := responseErrorFormat(http.StatusInternalServerError, w, msg, err)
+                fmt.Fprintf(w, string(b))
+                return
+        }</span>
+
+        <span class="cov8" title="1">response := &amp;schema.ResponseCount{Code: http.StatusOK, Status: "OK", Message: "ReportCountHandler retrieved data successfully", Count: *res}
         w.WriteHeader(http.StatusOK)
         b, _ := json.MarshalIndent(response, "", "        ")
         fmt.Fprintf(w, string(b))
