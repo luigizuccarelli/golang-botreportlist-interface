@@ -75,13 +75,13 @@ func (c *FakeConnectors) GetList(offset string, limit string) ([]schema.ReportLi
 	return list, nil
 }
 
-// GetAllStats - Couchbase stats wrapper
-func (c *FakeConnectors) GetAllStats() ([]schema.Stat, error) {
-	var stats []schema.Stat
+// GetConfusionMatrix - Couchbase stats wrapper
+func (c *FakeConnectors) GetConfusionMatrix() (*schema.ConfusionMatrix, error) {
+	var stats *schema.ConfusionMatrix
 	if c.Flag == "true" {
 		return stats, errors.New("forced GetAllStats (DB) error")
 	}
-	b, _ := ioutil.ReadFile("../../tests/payload-stats.json")
+	b, _ := ioutil.ReadFile("../../tests/confusion-matrix.json")
 	c.Trace("GetAllStats mock response %s", string(b))
 	json.Unmarshal(b, &stats)
 	return stats, nil

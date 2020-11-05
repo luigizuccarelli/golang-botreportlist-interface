@@ -92,7 +92,7 @@ func (fb *FakeBucket) DefaultCollection() *FakeCollection {
 
 // Next - override the original golang implementation
 func (fr *FakeResult) Next() bool {
-	if count < 2 {
+	if count < 3 {
 		count++
 		return true
 	}
@@ -107,10 +107,38 @@ func (fr *FakeResult) Row(ptr interface{}) error {
 	}
 	if reflect.TypeOf(ptr).String() == "**schema.Stat" {
 		var stat *schema.Stat
-		data := `{
-			"count": 60,
-			"success": true
-		}`
+		var data string
+
+		switch count {
+		case 0:
+			data = `{
+				"ProcessOutcome": "No Action",
+				"UserClassification": "Cancel Subscription",
+				"count": 25
+			}`
+			break
+		case 1:
+			data = `{
+				"ProcessOutcome": "No Action",
+				"UserClassification": "Cancel Autorenewal",
+				"count": 13
+			}`
+			break
+		case 2:
+			data = `{
+				"ProcessOutcome": "No Action",
+				"UserClassification": "",
+				"count": 34
+			}`
+			break
+		case 3:
+			data = `{
+				"ProcessOutcome": "No Action",
+				"UserClassification": "",
+				"count": 95
+			}`
+			break
+		}
 		json.Unmarshal([]byte(data), &stat)
 		*ptr.(**schema.Stat) = stat
 	} else {

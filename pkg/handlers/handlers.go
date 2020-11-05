@@ -69,7 +69,7 @@ func ListHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients)
 	}
 
 	// update the database
-	res, err := con.GetList(vars["from"], vars["to"])
+	res, err := con.GetList(vars["offset"], vars["limit"])
 	if err != nil {
 		msg := "ListHandler (get) couchbase  %v"
 		con.Error(msg, err)
@@ -240,7 +240,7 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
 	}
 
 	// get the stats data from couchbase
-	res, err := con.GetAllStats()
+	res, err := con.GetConfusionMatrix()
 	if err != nil {
 		msg := "StatsHandler (post) couchbase  %v"
 		con.Error(msg, err)

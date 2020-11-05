@@ -55,9 +55,9 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors/connections.go (79.2%)</option>
+				<option value="file0">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors/connections.go (73.2%)</option>
 				
-				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors/fake-connectors.go (95.0%)</option>
+				<option value="file1">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors/fake-connectors.go (91.8%)</option>
 				
 				<option value="file2">gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/handlers/fake-connectors.go (94.6%)</option>
 				
@@ -203,22 +203,63 @@ func (c *Connectors) GetListCount() (*int64, error) <span class="cov8" title="1"
         return &amp;v, nil</span>
 }
 
-// GetAllStats - get stats for bot accuracy
-func (c *Connectors) GetAllStats() ([]schema.Stat, error) <span class="cov8" title="1">{
+// GetConfusiorMatrix - get confusion matrix stats for bot accuracy
+func (c *Connectors) GetConfusionMatrix() (*schema.ConfusionMatrix, error) <span class="cov8" title="1">{
+        var cm = &amp;schema.ConfusionMatrix{}
+
+        // we first get all the counts for the bot
+        query := "select distinct ProcessOutcome,'UserClassification' as UserCalssififcation,count(ProcessOutcome) as count from servisbotstats where  UserClassification != \"\" group by ProcessOutcome"
+        statsTotal, err := getStatsData(query, c)
+        if err != nil </span><span class="cov0" title="0">{
+                return cm, err
+        }</span>
+
+        <span class="cov8" title="1">query = "select count(ProcessOutcome) as count,ProcessOutcome,UserClassification from servisbotstats where ProcessOutcome == \"No Action\" and UserClassification != \"No Action\" group by ProcessOutcome,UserClassification"
+        statsA, err := getStatsData(query, c)
+        if err != nil </span><span class="cov0" title="0">{
+                return cm, err
+        }</span>
+
+        // now get all no actions
+        <span class="cov8" title="1">query = "select count(ProcessOutcome) as count,ProcessOutcome,UserClassification from servisbotstats where ProcessOutcome == \"Cancel Subscription\" and UserClassification != \"Cancel Subscription\" group by ProcessOutcome,UserClassification"
+        statsB, err := getStatsData(query, c)
+        if err != nil </span><span class="cov0" title="0">{
+                return cm, err
+        }</span>
+
+        // now get all no actions
+        <span class="cov8" title="1">query = "select count(ProcessOutcome) as count,ProcessOutcome,UserClassification from servisbotstats where ProcessOutcome == \"Cancel Autorenewal\" and UserClassification != \"Cancel Autorenewal\" group by ProcessOutcome,UserClassification"
+        statsC, err := getStatsData(query, c)
+        if err != nil </span><span class="cov0" title="0">{
+                return cm, err
+        }</span>
+
+        // we now have all te relevant values for the 3X3 matrix
+        // let build our return matrix
+        // we know that the statsA array is for NoAction
+        <span class="cov8" title="1">cm = updateStatsStruct(statsA, statsB, statsC, statsTotal)
+
+        return cm, nil</span>
+}
+
+func getStatsData(query string, c *Connectors) ([]schema.Stat, error) <span class="cov8" title="1">{
         var stats []schema.Stat
         var stat *schema.Stat
-
-        query := "select count(meta().id) as count,`Success` from servisbotstats group by `Success`"
-        c.Trace("Function GetAllStats %s", query)
+        c.Info("Function getStatsData %s", query)
         res, err := c.Cluster.Query(query, &amp;gocb.QueryOptions{})
+        defer res.Close()
         if err != nil </span><span class="cov0" title="0">{
+                c.Error("Function getStatsData (query) %v", err)
                 return stats, err
         }</span>
 
         // iterate through each object
+        // struct with int64,string,string
         <span class="cov8" title="1">for res.Next() </span><span class="cov8" title="1">{
                 err := res.Row(&amp;stat)
+                c.Trace("Function getStatsData data %v", stat)
                 if err != nil </span><span class="cov0" title="0">{
+                        c.Error("Function getStatsData (next loop) %v", err)
                         break</span>
                 }
                 <span class="cov8" title="1">stats = append(stats, *stat)</span>
@@ -229,7 +270,68 @@ func (c *Connectors) GetAllStats() ([]schema.Stat, error) <span class="cov8" tit
         if err != nil </span><span class="cov0" title="0">{
                 return stats, err
         }</span>
-        <span class="cov8" title="1">return stats, nil</span>
+        <span class="cov8" title="1">c.Trace("Function getStatsData alldata %v", stats)
+        return stats, nil</span>
+}
+
+func updateStatsStruct(in ...[]schema.Stat) *schema.ConfusionMatrix <span class="cov8" title="1">{
+
+        var cm = &amp;schema.ConfusionMatrix{}
+
+        //switch mode {
+        //case "No Action":
+        for _, item := range in[0] </span><span class="cov8" title="1">{
+                switch item.UserClassification </span>{
+                case "Cancel Subscription":<span class="cov0" title="0">
+                        cm.NoAction.Cancel = item.Count
+                        break</span>
+                case "Cancel Autorenewal":<span class="cov8" title="1">
+                        cm.NoAction.CancelAR = item.Count
+                        break</span>
+                }
+        }
+        //        break
+        //case "Cancel Subscription":
+        <span class="cov8" title="1">for _, item := range in[1] </span><span class="cov8" title="1">{
+                switch item.UserClassification </span>{
+                case "No Action":<span class="cov0" title="0">
+                        cm.Cancel.NoAction = item.Count
+                        break</span>
+                case "Cancel Autorenewal":<span class="cov8" title="1">
+                        cm.Cancel.CancelAR = item.Count
+                        break</span>
+                }
+        }
+        //        break
+        //case "Cancel Autorenewal":
+        <span class="cov8" title="1">for _, item := range in[2] </span><span class="cov8" title="1">{
+                switch item.UserClassification </span>{
+                case "No Action":<span class="cov0" title="0">
+                        cm.CancelAR.NoAction = item.Count
+                        break</span>
+                case "Cancel Subscription":<span class="cov0" title="0">
+                        cm.CancelAR.Cancel = item.Count
+                        break</span>
+                }
+        }
+        //        break
+        //case "Totals":
+        <span class="cov8" title="1">for _, item := range in[3] </span><span class="cov8" title="1">{
+                switch item.ProcessOutcome </span>{
+                case "No Action":<span class="cov8" title="1">
+                        cm.NoAction.NoAction = item.Count
+                        break</span>
+                case "Cancel Subscription":<span class="cov0" title="0">
+                        cm.Cancel.Cancel = item.Count
+                        break</span>
+                case "Cancel Autorenewal":<span class="cov0" title="0">
+                        cm.CancelAR.CancelAR = item.Count
+                        break</span>
+                }
+        }
+        //break
+        //}
+        <span class="cov8" title="1">return cm</span>
 }
 </pre>
 		
@@ -327,7 +429,7 @@ func (fb *FakeBucket) DefaultCollection() *FakeCollection <span class="cov8" tit
 
 // Next - override the original golang implementation
 func (fr *FakeResult) Next() bool <span class="cov8" title="1">{
-        if count &lt; 2 </span><span class="cov8" title="1">{
+        if count &lt; 3 </span><span class="cov8" title="1">{
                 count++
                 return true
         }</span>
@@ -342,13 +444,41 @@ func (fr *FakeResult) Row(ptr interface{}) error <span class="cov8" title="1">{
         }</span>
         <span class="cov8" title="1">if reflect.TypeOf(ptr).String() == "**schema.Stat" </span><span class="cov8" title="1">{
                 var stat *schema.Stat
-                data := `{
-                        "count": 60,
-                        "success": true
-                }`
-                json.Unmarshal([]byte(data), &amp;stat)
-                *ptr.(**schema.Stat) = stat
-        }</span> else<span class="cov8" title="1"> {
+                var data string
+
+                switch count </span>{
+                case 0:<span class="cov0" title="0">
+                        data = `{
+                                "ProcessOutcome": "No Action",
+                                "UserClassification": "Cancel Subscription",
+                                "count": 25
+                        }`
+                        break</span>
+                case 1:<span class="cov8" title="1">
+                        data = `{
+                                "ProcessOutcome": "No Action",
+                                "UserClassification": "Cancel Autorenewal",
+                                "count": 13
+                        }`
+                        break</span>
+                case 2:<span class="cov8" title="1">
+                        data = `{
+                                "ProcessOutcome": "No Action",
+                                "UserClassification": "",
+                                "count": 34
+                        }`
+                        break</span>
+                case 3:<span class="cov8" title="1">
+                        data = `{
+                                "ProcessOutcome": "No Action",
+                                "UserClassification": "",
+                                "count": 95
+                        }`
+                        break</span>
+                }
+                <span class="cov8" title="1">json.Unmarshal([]byte(data), &amp;stat)
+                *ptr.(**schema.Stat) = stat</span>
+        } else<span class="cov8" title="1"> {
                 var rl *schema.ReportList
                 data := `{ "id": "096esbpfrk8b3nhdlfhditsmk10gj03g06i3c201.json",
     "servisbotstats": {
@@ -380,7 +510,7 @@ func (fr *FakeResult) Err() error <span class="cov8" title="1">{
 }</span>
 
 // Close - do we need to explain ?
-func (fr *FakeResult) Close() {<span class="cov0" title="0">
+func (fr *FakeResult) Close() {<span class="cov8" title="1">
 }</span>
 
 // Upsert : wrapper function for couchbase collection upsert
@@ -469,13 +599,13 @@ func (c *FakeConnectors) GetList(offset string, limit string) ([]schema.ReportLi
         return list, nil</span>
 }
 
-// GetAllStats - Couchbase stats wrapper
-func (c *FakeConnectors) GetAllStats() ([]schema.Stat, error) <span class="cov8" title="1">{
-        var stats []schema.Stat
+// GetConfusionMatrix - Couchbase stats wrapper
+func (c *FakeConnectors) GetConfusionMatrix() (*schema.ConfusionMatrix, error) <span class="cov8" title="1">{
+        var stats *schema.ConfusionMatrix
         if c.Flag == "true" </span><span class="cov8" title="1">{
                 return stats, errors.New("forced GetAllStats (DB) error")
         }</span>
-        <span class="cov8" title="1">b, _ := ioutil.ReadFile("../../tests/payload-stats.json")
+        <span class="cov8" title="1">b, _ := ioutil.ReadFile("../../tests/confusion-matrix.json")
         c.Trace("GetAllStats mock response %s", string(b))
         json.Unmarshal(b, &amp;stats)
         return stats, nil</span>
@@ -581,7 +711,7 @@ func ListHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients)
         }</span>
 
         // update the database
-        <span class="cov8" title="1">res, err := con.GetList(vars["from"], vars["to"])
+        <span class="cov8" title="1">res, err := con.GetList(vars["offset"], vars["limit"])
         if err != nil </span><span class="cov8" title="1">{
                 msg := "ListHandler (get) couchbase  %v"
                 con.Error(msg, err)
@@ -752,7 +882,7 @@ func StatsHandler(w http.ResponseWriter, r *http.Request, con connectors.Clients
         }</span>
 
         // get the stats data from couchbase
-        <span class="cov8" title="1">res, err := con.GetAllStats()
+        <span class="cov8" title="1">res, err := con.GetConfusionMatrix()
         if err != nil </span><span class="cov8" title="1">{
                 msg := "StatsHandler (post) couchbase  %v"
                 con.Error(msg, err)

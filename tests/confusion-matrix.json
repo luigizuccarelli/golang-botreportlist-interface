@@ -1,0 +1,17 @@
+{
+  "cancel": {
+    "cancel": 0,
+    "cancelar": 0,
+    "noaction": 0
+  },
+  "cancelar": {
+    "cancel": 0,
+    "cancelar": 0,
+    "noaction": 0
+  },
+  "noaction": {
+    "cancel": 0,
+    "cancelar": 0,
+    "noaction": 0
+  }
+}

@@ -56,7 +56,7 @@ func startHttpServer(con connectors.Clients) *http.Server {
 	r.Use(prometheusMiddleware)
 	r.Path("/api/v2/metrics").Handler(promhttp.Handler())
 
-	r.HandleFunc("/api/v1/list/reports/{from}/{to}", func(w http.ResponseWriter, req *http.Request) {
+	r.HandleFunc("/api/v1/list/reports/{offset}/{limit}", func(w http.ResponseWriter, req *http.Request) {
 		handlers.ListHandler(w, req, con)
 	}).Methods("POST", "OPTIONS")
 

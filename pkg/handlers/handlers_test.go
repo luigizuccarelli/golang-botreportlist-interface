@@ -23,7 +23,7 @@ func (errReader) Read(p []byte) (n int, err error) {
 // TestAllHandlers - main test entry point
 func TestAllHandlers(t *testing.T) {
 
-	logger := &simple.Logger{Level: "info"}
+	logger := &simple.Logger{Level: "trace"}
 
 	t.Run("IsAlive : should pass", func(t *testing.T) {
 		var STATUS int = 200
@@ -56,7 +56,8 @@ func TestAllHandlers(t *testing.T) {
 		conn := NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
-			"lastobject": "test",
+			"offset": "10",
+			"limit":  "10",
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +84,8 @@ func TestAllHandlers(t *testing.T) {
 		conn := NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
-			"lastobject": "test",
+			"offset": "10",
+			"limit":  "10",
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -112,7 +114,8 @@ func TestAllHandlers(t *testing.T) {
 		conn := NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
-			"lastobject": "test",
+			"offset": "10",
+			"limit":  "10",
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -141,7 +144,8 @@ func TestAllHandlers(t *testing.T) {
 		conn := NewTestConnectors(STATUS, logger)
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
-			"lastobject": "test",
+			"offset": "10",
+			"limit":  "10",
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -171,7 +175,8 @@ func TestAllHandlers(t *testing.T) {
 		conn.Meta("true")
 		//Hack to try to fake gorilla/mux vars
 		vars := map[string]string{
-			"lastobject": "test",
+			"offset": "10",
+			"limit":  "10",
 		}
 		req = mux.SetURLVars(req, vars)
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

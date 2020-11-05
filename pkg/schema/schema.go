@@ -18,10 +18,10 @@ type ResponseCount struct {
 
 // StatsResponse schema
 type StatsResponse struct {
-	Code    int    `json:"code"`
-	Status  string `json:"status"`
-	Message string `json:"message"`
-	Stats   []Stat `json:"stats,omitempty"`
+	Code    int              `json:"code"`
+	Status  string           `json:"status"`
+	Message string           `json:"message"`
+	Stats   *ConfusionMatrix `json:"confusiomatrix,omitempty"`
 }
 
 // ReportResponse schema
@@ -91,10 +91,29 @@ type CustomerDetail struct {
 	Message         string `json:"message"`
 }
 
-// Stats schema
 type Stat struct {
-	Count   float64 `json:"count"`
-	Success bool    `json:"success"`
+	ProcessOutcome     string `json:"processoutcome"`
+	UserClassification string `json:"userclassification"`
+	Count              int64  `json:"count"`
+}
+
+// ConfusionMatrix schema
+type ConfusionMatrix struct {
+	NoAction struct {
+		NoAction int64 `json:"noaction"`
+		Cancel   int64 `json:"cancel"`
+		CancelAR int64 `jsonr:"cancelar"`
+	} `json:"noaction"`
+	Cancel struct {
+		NoAction int64 `json:"noaction"`
+		Cancel   int64 `json:"cancel"`
+		CancelAR int64 `json""cancelar"`
+	} `json:"cancel"`
+	CancelAR struct {
+		NoAction int64 `json:"noaction"`
+		Cancel   int64 `json:"cancel"`
+		CancelAR int64 `json""cancelar"`
+	} `json:"cancelar"`
 }
 
 // List schema

@@ -105,11 +105,11 @@ func TestConnections(t *testing.T) {
 		con.Info("Data result %v", data)
 	})
 
-	t.Run("GetAllStats : should pass", func(t *testing.T) {
+	t.Run("GetConfusionMatrix  : should pass", func(t *testing.T) {
 		con := &Connectors{Bucket: &FakeBucket{}, Cluster: &FakeCluster{}, S3Service: &FakeS3{}, Logger: logger}
-		data, err := con.GetAllStats()
+		data, err := con.GetConfusionMatrix()
 		if err != nil {
-			t.Errorf(fmt.Sprintf("Function (%s) assert (error should be nil) -  got (%v) wanted (%v)", "GetAllStats", err, nil))
+			t.Errorf(fmt.Sprintf("Function (%s) assert (error should be nil) -  got (%v) wanted (%v)", "GetConfusionMatrix", err, nil))
 		}
 		con.Info("Data result %v", data)
 	})

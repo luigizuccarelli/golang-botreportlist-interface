@@ -124,22 +124,63 @@ func (c *Connectors) GetListCount() (*int64, error) {
 	return &v, nil
 }
 
-// GetAllStats - get stats for bot accuracy
-func (c *Connectors) GetAllStats() ([]schema.Stat, error) {
+// GetConfusiorMatrix - get confusion matrix stats for bot accuracy
+func (c *Connectors) GetConfusionMatrix() (*schema.ConfusionMatrix, error) {
+	var cm = &schema.ConfusionMatrix{}
+
+	// we first get all the counts for the bot
+	query := "select distinct ProcessOutcome,'UserClassification' as UserCalssififcation,count(ProcessOutcome) as count from servisbotstats where  UserClassification != \"\" group by ProcessOutcome"
+	statsTotal, err := getStatsData(query, c)
+	if err != nil {
+		return cm, err
+	}
+
+	query = "select count(ProcessOutcome) as count,ProcessOutcome,UserClassification from servisbotstats where ProcessOutcome == \"No Action\" and UserClassification != \"No Action\" group by ProcessOutcome,UserClassification"
+	statsA, err := getStatsData(query, c)
+	if err != nil {
+		return cm, err
+	}
+
+	// now get all no actions
+	query = "select count(ProcessOutcome) as count,ProcessOutcome,UserClassification from servisbotstats where ProcessOutcome == \"Cancel Subscription\" and UserClassification != \"Cancel Subscription\" group by ProcessOutcome,UserClassification"
+	statsB, err := getStatsData(query, c)
+	if err != nil {
+		return cm, err
+	}
+
+	// now get all no actions
+	query = "select count(ProcessOutcome) as count,ProcessOutcome,UserClassification from servisbotstats where ProcessOutcome == \"Cancel Autorenewal\" and UserClassification != \"Cancel Autorenewal\" group by ProcessOutcome,UserClassification"
+	statsC, err := getStatsData(query, c)
+	if err != nil {
+		return cm, err
+	}
+
+	// we now have all te relevant values for the 3X3 matrix
+	// let build our return matrix
+	// we know that the statsA array is for NoAction
+	cm = updateStatsStruct(statsA, statsB, statsC, statsTotal)
+
+	return cm, nil
+}
+
+func getStatsData(query string, c *Connectors) ([]schema.Stat, error) {
 	var stats []schema.Stat
 	var stat *schema.Stat
-
-	query := "select count(meta().id) as count,`Success` from servisbotstats group by `Success`"
-	c.Trace("Function GetAllStats %s", query)
+	c.Info("Function getStatsData %s", query)
 	res, err := c.Cluster.Query(query, &gocb.QueryOptions{})
+	defer res.Close()
 	if err != nil {
+		c.Error("Function getStatsData (query) %v", err)
 		return stats, err
 	}
 
 	// iterate through each object
+	// struct with int64,string,string
 	for res.Next() {
 		err := res.Row(&stat)
+		c.Trace("Function getStatsData data %v", stat)
 		if err != nil {
+			c.Error("Function getStatsData (next loop) %v", err)
 			break
 		}
 		stats = append(stats, *stat)
@@ -150,5 +191,66 @@ func (c *Connectors) GetAllStats() ([]schema.Stat, error) {
 	if err != nil {
 		return stats, err
 	}
+	c.Trace("Function getStatsData alldata %v", stats)
 	return stats, nil
+}
+
+func updateStatsStruct(in ...[]schema.Stat) *schema.ConfusionMatrix {
+
+	var cm = &schema.ConfusionMatrix{}
+
+	//switch mode {
+	//case "No Action":
+	for _, item := range in[0] {
+		switch item.UserClassification {
+		case "Cancel Subscription":
+			cm.NoAction.Cancel = item.Count
+			break
+		case "Cancel Autorenewal":
+			cm.NoAction.CancelAR = item.Count
+			break
+		}
+	}
+	//	break
+	//case "Cancel Subscription":
+	for _, item := range in[1] {
+		switch item.UserClassification {
+		case "No Action":
+			cm.Cancel.NoAction = item.Count
+			break
+		case "Cancel Autorenewal":
+			cm.Cancel.CancelAR = item.Count
+			break
+		}
+	}
+	//	break
+	//case "Cancel Autorenewal":
+	for _, item := range in[2] {
+		switch item.UserClassification {
+		case "No Action":
+			cm.CancelAR.NoAction = item.Count
+			break
+		case "Cancel Subscription":
+			cm.CancelAR.Cancel = item.Count
+			break
+		}
+	}
+	//	break
+	//case "Totals":
+	for _, item := range in[3] {
+		switch item.ProcessOutcome {
+		case "No Action":
+			cm.NoAction.NoAction = item.Count
+			break
+		case "Cancel Subscription":
+			cm.Cancel.Cancel = item.Count
+			break
+		case "Cancel Autorenewal":
+			cm.CancelAR.CancelAR = item.Count
+			break
+		}
+	}
+	//break
+	//}
+	return cm
 }
