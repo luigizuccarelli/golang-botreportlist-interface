@@ -278,8 +278,6 @@ func updateStatsStruct(in ...[]schema.Stat) *schema.ConfusionMatrix <span class=
 
         var cm = &amp;schema.ConfusionMatrix{}
 
-        //switch mode {
-        //case "No Action":
         for _, item := range in[0] </span><span class="cov8" title="1">{
                 switch item.UserClassification </span>{
                 case "Cancel Subscription":<span class="cov0" title="0">
@@ -290,8 +288,7 @@ func updateStatsStruct(in ...[]schema.Stat) *schema.ConfusionMatrix <span class=
                         break</span>
                 }
         }
-        //        break
-        //case "Cancel Subscription":
+
         <span class="cov8" title="1">for _, item := range in[1] </span><span class="cov8" title="1">{
                 switch item.UserClassification </span>{
                 case "No Action":<span class="cov0" title="0">
@@ -302,8 +299,7 @@ func updateStatsStruct(in ...[]schema.Stat) *schema.ConfusionMatrix <span class=
                         break</span>
                 }
         }
-        //        break
-        //case "Cancel Autorenewal":
+
         <span class="cov8" title="1">for _, item := range in[2] </span><span class="cov8" title="1">{
                 switch item.UserClassification </span>{
                 case "No Action":<span class="cov0" title="0">
@@ -314,23 +310,20 @@ func updateStatsStruct(in ...[]schema.Stat) *schema.ConfusionMatrix <span class=
                         break</span>
                 }
         }
-        //        break
-        //case "Totals":
+
         <span class="cov8" title="1">for _, item := range in[3] </span><span class="cov8" title="1">{
                 switch item.ProcessOutcome </span>{
                 case "No Action":<span class="cov8" title="1">
-                        cm.NoAction.NoAction = item.Count
+                        cm.NoAction.NoAction = item.Count - (cm.NoAction.Cancel + cm.NoAction.CancelAR)
                         break</span>
                 case "Cancel Subscription":<span class="cov0" title="0">
-                        cm.Cancel.Cancel = item.Count
+                        cm.Cancel.Cancel = item.Count - (cm.Cancel.NoAction + cm.Cancel.CancelAR)
                         break</span>
                 case "Cancel Autorenewal":<span class="cov0" title="0">
-                        cm.CancelAR.CancelAR = item.Count
+                        cm.CancelAR.CancelAR = item.Count - (cm.CancelAR.NoAction + cm.CancelAR.Cancel)
                         break</span>
                 }
         }
-        //break
-        //}
         <span class="cov8" title="1">return cm</span>
 }
 </pre>

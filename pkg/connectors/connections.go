@@ -199,8 +199,6 @@ func updateStatsStruct(in ...[]schema.Stat) *schema.ConfusionMatrix {
 
 	var cm = &schema.ConfusionMatrix{}
 
-	//switch mode {
-	//case "No Action":
 	for _, item := range in[0] {
 		switch item.UserClassification {
 		case "Cancel Subscription":
@@ -211,8 +209,7 @@ func updateStatsStruct(in ...[]schema.Stat) *schema.ConfusionMatrix {
 			break
 		}
 	}
-	//	break
-	//case "Cancel Subscription":
+
 	for _, item := range in[1] {
 		switch item.UserClassification {
 		case "No Action":
@@ -223,8 +220,7 @@ func updateStatsStruct(in ...[]schema.Stat) *schema.ConfusionMatrix {
 			break
 		}
 	}
-	//	break
-	//case "Cancel Autorenewal":
+
 	for _, item := range in[2] {
 		switch item.UserClassification {
 		case "No Action":
@@ -235,22 +231,19 @@ func updateStatsStruct(in ...[]schema.Stat) *schema.ConfusionMatrix {
 			break
 		}
 	}
-	//	break
-	//case "Totals":
+
 	for _, item := range in[3] {
 		switch item.ProcessOutcome {
 		case "No Action":
-			cm.NoAction.NoAction = item.Count
+			cm.NoAction.NoAction = item.Count - (cm.NoAction.Cancel + cm.NoAction.CancelAR)
 			break
 		case "Cancel Subscription":
-			cm.Cancel.Cancel = item.Count
+			cm.Cancel.Cancel = item.Count - (cm.Cancel.NoAction + cm.Cancel.CancelAR)
 			break
 		case "Cancel Autorenewal":
-			cm.CancelAR.CancelAR = item.Count
+			cm.CancelAR.CancelAR = item.Count - (cm.CancelAR.NoAction + cm.CancelAR.Cancel)
 			break
 		}
 	}
-	//break
-	//}
 	return cm
 }

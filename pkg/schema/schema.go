@@ -21,7 +21,7 @@ type StatsResponse struct {
 	Code    int              `json:"code"`
 	Status  string           `json:"status"`
 	Message string           `json:"message"`
-	Stats   *ConfusionMatrix `json:"confusiomatrix,omitempty"`
+	Stats   *ConfusionMatrix `json:"confusionmatrix,omitempty"`
 }
 
 // ReportResponse schema
@@ -102,17 +102,17 @@ type ConfusionMatrix struct {
 	NoAction struct {
 		NoAction int64 `json:"noaction"`
 		Cancel   int64 `json:"cancel"`
-		CancelAR int64 `jsonr:"cancelar"`
+		CancelAR int64 `json:"cancelar"`
 	} `json:"noaction"`
 	Cancel struct {
 		NoAction int64 `json:"noaction"`
 		Cancel   int64 `json:"cancel"`
-		CancelAR int64 `json""cancelar"`
+		CancelAR int64 `json:"cancelar"`
 	} `json:"cancel"`
 	CancelAR struct {
 		NoAction int64 `json:"noaction"`
 		Cancel   int64 `json:"cancel"`
-		CancelAR int64 `json""cancelar"`
+		CancelAR int64 `json:"cancelar"`
 	} `json:"cancelar"`
 }
 
