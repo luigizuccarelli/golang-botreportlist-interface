@@ -2,12 +2,10 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
 LABEL maintainer="lzuccarelli@tfd.ie"
 
-ENV GOPATH /go
-ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
-COPY build/microservice uid_entrypoint.sh /go/ 
-COPY swaggerui/ /go/swaggerui/
-RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 0755 "$GOPATH"
-WORKDIR $GOPATH
+RUN mkdir -p /go/src /go/bin && chmod -R 0755 /go
+COPY uid_entrypoint.sh build/microservice /go/
+RUN chown 1001:root /go
+WORKDIR /go
 
 USER 1001
 
@@ -15,3 +13,4 @@ ENTRYPOINT [ "./uid_entrypoint.sh" ]
 
 # This will change depending on each microservice entry point
 CMD ["./microservice"]
+

@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"os"
 
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors"
-	"gitea-cicd.apps.aws2-dev.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/schema"
+	"gitea-devops-shared-threefld-cicd.apps.c4.us-east-1.dev.aws.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/connectors"
+	"gitea-devops-shared-threefld-cicd.apps.c4.us-east-1.dev.aws.ocp.14west.io/cicd/servisbot-reportlist-interface/pkg/schema"
 	"github.com/aws/aws-sdk-go/service/s3"
 	gocb "github.com/couchbase/gocb/v2"
 	"github.com/dgrijalva/jwt-go"
