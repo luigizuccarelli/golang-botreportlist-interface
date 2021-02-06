@@ -5,3 +5,4 @@ The BOT processes the emails (from forms and direct emails), it pushes the resul
 
 ## Update for openshift pipelines
 - removed all references to GOCD
+- updated memory limits for osp tasks
