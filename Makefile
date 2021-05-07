@@ -23,7 +23,7 @@ clean:
 	go clean ./...
 
 container:
-	podman build -t  tfld-docker-prd-local.repo.14west.io/servisbot-reportlist-interface:1.14.2 .
+	podman build -t  quay.io/luigizuccarelli/servisbot-reportlist-interface:1.16.3 .
 
 push:
-	podman push tfld-docker-prd-local.repo.14west.io/servisbot-reportlist-interface:1.14.2 
+	podman push --authfile=/home/lzuccarelli/config.json quay.io/luigizuccarelli/servisbot-reportlist-interface:1.16.3 
